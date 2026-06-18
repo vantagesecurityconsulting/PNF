@@ -1,0 +1,479 @@
+/**
+ * pdfGenerator.js — jsPDF report generators for ShuttleLog.
+ *
+ * AIRTABLE: report payloads are assembled from the mock stores today. After
+ * migration, the same builder functions receive records fetched from Airtable
+ * (Shifts, Trips, Inspections, Vehicles, Drivers) — only the data source
+ * changes, the layout code stays identical.
+ */
+
+import jsPDF from 'jspdf'
+import autoTable from 'jspdf-autotable'
+import { inspectionGroups, fuelLevels } from '../data/inspectionItems'
+import {
+  formatDate,
+  formatDateTime,
+  formatTime,
+  formatMinutes,
+  minutesBetween,
+} from './formatters'
+
+// Brand palette (RGB)
+const GREEN = [63, 174, 41]
+const GREEN_DARK = [45, 140, 30]
+const BLACK = [17, 17, 17]
+const WHITE = [255, 255, 255]
+const RED = [208, 2, 27]
+const GRAY = [107, 107, 107]
+const LIGHT = [232, 247, 229]
+
+const PAGE = { w: 210, h: 297, margin: 14 }
+
+// ---- Shared chrome --------------------------------------------------------
+
+/** Draws the Park'N Fly mark (vector recreation) at x,y with given size. */
+function drawLogoMark(doc, x, y, size) {
+  // green rounded square
+  doc.setFillColor(...GREEN)
+  doc.roundedRect(x, y, size, size, size * 0.16, size * 0.16, 'F')
+  // white car body
+  doc.setFillColor(...WHITE)
+  const cx = x + size * 0.16
+  const cy = y + size * 0.5
+  const cw = size * 0.62
+  const ch = size * 0.26
+  doc.roundedRect(cx, cy, cw, ch, ch * 0.4, ch * 0.4, 'F')
+  doc.roundedRect(cx + cw * 0.18, cy - ch * 0.55, cw * 0.5, ch * 0.7, ch * 0.3, ch * 0.3, 'F')
+  // wheels
+  doc.setFillColor(...BLACK)
+  doc.circle(cx + cw * 0.25, cy + ch, size * 0.05, 'F')
+  doc.circle(cx + cw * 0.72, cy + ch, size * 0.05, 'F')
+  // black airplane (triangle)
+  doc.setFillColor(...BLACK)
+  doc.triangle(
+    x + size * 0.52, y + size * 0.2,
+    x + size * 0.86, y + size * 0.32,
+    x + size * 0.56, y + size * 0.36,
+    'F',
+  )
+}
+
+/** Black header band + green accent strip. Returns y below the header. */
+function drawHeader(doc, title, subtitle = "Halifax, NS · YHZ") {
+  const headerH = 30
+  doc.setFillColor(...BLACK)
+  doc.rect(0, 0, PAGE.w, headerH, 'F')
+
+  drawLogoMark(doc, PAGE.margin, 7, 16)
+
+  doc.setTextColor(...WHITE)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(16)
+  doc.text(title, PAGE.margin + 22, 15)
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9)
+  doc.setTextColor(200, 200, 200)
+  doc.text(`Park'N Fly · ${subtitle}`, PAGE.margin + 22, 21)
+
+  // generated timestamp (right aligned)
+  doc.setFontSize(8)
+  doc.setTextColor(180, 180, 180)
+  doc.text(`Generated ${formatDateTime(new Date())}`, PAGE.w - PAGE.margin, 12, { align: 'right' })
+
+  // green accent strip
+  doc.setFillColor(...GREEN)
+  doc.rect(0, headerH, PAGE.w, 3, 'F')
+
+  return headerH + 11
+}
+
+/** Footer on every page: confidentiality + page numbers. */
+function drawFooters(doc) {
+  const pages = doc.internal.getNumberOfPages()
+  for (let i = 1; i <= pages; i++) {
+    doc.setPage(i)
+    doc.setDrawColor(220, 220, 218)
+    doc.setLineWidth(0.3)
+    doc.line(PAGE.margin, PAGE.h - 12, PAGE.w - PAGE.margin, PAGE.h - 12)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...GRAY)
+    doc.text('Park\'N Fly Halifax — Confidential', PAGE.margin, PAGE.h - 7)
+    doc.text(`Page ${i} of ${pages}`, PAGE.w - PAGE.margin, PAGE.h - 7, { align: 'right' })
+    doc.setTextColor(...GREEN_DARK)
+    doc.text('ShuttleLog', PAGE.w / 2, PAGE.h - 7, { align: 'center' })
+  }
+}
+
+/** Labelled info block (two-column grid of label/value pairs). */
+function drawInfoBlock(doc, y, pairs, title) {
+  if (title) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...BLACK)
+    doc.text(title, PAGE.margin, y)
+    y += 5
+  }
+  const colW = (PAGE.w - PAGE.margin * 2) / 2
+  const rowH = 7
+  pairs.forEach((pair, i) => {
+    const col = i % 2
+    const row = Math.floor(i / 2)
+    const x = PAGE.margin + col * colW
+    const yy = y + row * rowH
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8)
+    doc.setTextColor(...GRAY)
+    doc.text(pair[0].toUpperCase(), x, yy)
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(10)
+    doc.setTextColor(...BLACK)
+    doc.text(String(pair[1]), x + 38, yy)
+  })
+  const rows = Math.ceil(pairs.length / 2)
+  return y + rows * rowH + 4
+}
+
+/** Row of green stat boxes. */
+function drawStatBoxes(doc, y, stats) {
+  const gap = 4
+  const totalW = PAGE.w - PAGE.margin * 2
+  const boxW = (totalW - gap * (stats.length - 1)) / stats.length
+  const boxH = 20
+  stats.forEach((s, i) => {
+    const x = PAGE.margin + i * (boxW + gap)
+    doc.setFillColor(...LIGHT)
+    doc.roundedRect(x, y, boxW, boxH, 2.5, 2.5, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(16)
+    doc.setTextColor(...GREEN_DARK)
+    doc.text(String(s.value), x + boxW / 2, y + 9, { align: 'center' })
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(7.5)
+    doc.setTextColor(...GRAY)
+    doc.text(s.label, x + boxW / 2, y + 15, { align: 'center' })
+  })
+  return y + boxH + 8
+}
+
+// ---- Helpers --------------------------------------------------------------
+
+function tripTotals(trips) {
+  const paxTo = trips.reduce((s, t) => s + (t.paxToAirport || 0), 0)
+  const paxFrom = trips.reduce((s, t) => s + (t.paxFromAirport || 0), 0)
+  return { paxTo, paxFrom, total: paxTo + paxFrom, count: trips.length }
+}
+
+// ===========================================================================
+// 1. FULL SHIFT REPORT
+// ===========================================================================
+export function generateShiftReport({ shift, inspection, driver, vehicle }) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  let y = drawHeader(doc, 'DRIVER SHIFT REPORT')
+
+  const trips = shift?.trips || []
+  const totals = tripTotals(trips)
+  const km = shift?.odoEnd && shift?.odoStart ? shift.odoEnd - shift.odoStart : null
+  const dur = minutesBetween(shift?.startTime, shift?.endTime)
+
+  y = drawInfoBlock(
+    doc,
+    y,
+    [
+      ['Driver', driver?.name || '—'],
+      ['Vehicle', vehicle ? `${vehicle.busNum} (${vehicle.make} ${vehicle.model})` : '—'],
+      ['Date', formatDate(shift?.date)],
+      ['Shift Duration', dur ? formatMinutes(dur) : '—'],
+      ['Odometer Start', shift?.odoStart != null ? `${shift.odoStart.toLocaleString()} km` : '—'],
+      ['Odometer End', shift?.odoEnd != null ? `${shift.odoEnd.toLocaleString()} km` : '—'],
+      ['Total Distance', km != null ? `${km.toLocaleString()} km` : '—'],
+      ['Employee ID', driver?.employeeId || '—'],
+    ],
+    'SHIFT SUMMARY',
+  )
+
+  y = drawStatBoxes(doc, y, [
+    { value: totals.count, label: 'Total Trips' },
+    { value: totals.paxTo, label: 'Pax to Airport' },
+    { value: totals.paxFrom, label: 'Pax from Airport' },
+    { value: totals.total, label: 'Total Passengers' },
+  ])
+
+  // Trip log table
+  const body = trips.map((t) => [
+    `#${t.tripNumber}`,
+    formatTime(t.departLotTime),
+    t.paxToAirport ?? 0,
+    formatTime(t.arriveAirportTime),
+    formatTime(t.departAirportTime),
+    t.paxFromAirport ?? 0,
+    formatTime(t.arriveLotTime),
+    formatMinutes(minutesBetween(t.departLotTime, t.arriveLotTime)),
+    (t.paxToAirport || 0) + (t.paxFromAirport || 0),
+  ])
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Trip', 'Left Lot', 'Pax→', 'At Airport', 'Left Airport', 'Pax←', 'At Lot', 'Duration', 'Total Pax']],
+    body,
+    foot: [[
+      'TOTALS', '', totals.paxTo, '', '', totals.paxFrom, '', '', totals.total,
+    ]],
+    theme: 'striped',
+    headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: 'bold', fontSize: 8 },
+    footStyles: { fillColor: LIGHT, textColor: GREEN_DARK, fontStyle: 'bold', fontSize: 8.5 },
+    bodyStyles: { fontSize: 8, textColor: BLACK },
+    alternateRowStyles: { fillColor: [248, 248, 246] },
+    margin: { left: PAGE.margin, right: PAGE.margin },
+    columnStyles: {
+      2: { halign: 'center' },
+      5: { halign: 'center' },
+      8: { halign: 'center', fontStyle: 'bold' },
+    },
+  })
+
+  // Inspection summary
+  if (inspection) {
+    let iy = doc.lastAutoTable.finalY + 10
+    if (iy > PAGE.h - 80) {
+      doc.addPage()
+      iy = drawHeader(doc, 'DRIVER SHIFT REPORT')
+    }
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...BLACK)
+    doc.text('PRE-TRIP INSPECTION', PAGE.margin, iy)
+    iy += 4
+
+    const inspBody = []
+    inspectionGroups.forEach((group) => {
+      group.items.forEach((item) => {
+        const res = inspection.results?.[item.key]
+        inspBody.push([group.label, item.label, (res || 'n/a').toUpperCase()])
+      })
+    })
+
+    autoTable(doc, {
+      startY: iy,
+      head: [['Category', 'Item', 'Result']],
+      body: inspBody,
+      theme: 'grid',
+      headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 8 },
+      bodyStyles: { fontSize: 7.5 },
+      margin: { left: PAGE.margin, right: PAGE.margin },
+      columnStyles: { 2: { halign: 'center', cellWidth: 28, fontStyle: 'bold' } },
+      didParseCell: (data) => {
+        if (data.section === 'body' && data.column.index === 2) {
+          const v = data.cell.raw
+          if (v === 'FAIL') {
+            data.cell.styles.textColor = RED
+          } else if (v === 'PASS') {
+            data.cell.styles.textColor = GREEN_DARK
+          }
+        }
+      },
+    })
+
+    let ny = doc.lastAutoTable.finalY + 8
+    ny = drawNotesAndSignatures(doc, ny, inspection, true)
+  }
+
+  drawFooters(doc)
+  doc.save(`ShiftReport_${driver?.name?.replace(/\s+/g, '') || 'Driver'}_${shift?.date || ''}.pdf`)
+}
+
+// Notes + dual signature lines. Returns new y.
+function drawNotesAndSignatures(doc, y, inspection, withSupervisor) {
+  if (y > PAGE.h - 50) {
+    doc.addPage()
+    y = drawHeader(doc, 'DRIVER SHIFT REPORT')
+  }
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(9)
+  doc.setTextColor(...BLACK)
+  doc.text('Notes', PAGE.margin, y)
+  y += 5
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8.5)
+  doc.setTextColor(...GRAY)
+  const notes = inspection?.notes || 'No additional notes.'
+  const lines = doc.splitTextToSize(notes, PAGE.w - PAGE.margin * 2)
+  doc.text(lines, PAGE.margin, y)
+  y += lines.length * 4.5 + 12
+
+  // signature lines
+  const colW = (PAGE.w - PAGE.margin * 2 - 10) / 2
+  doc.setDrawColor(...BLACK)
+  doc.setLineWidth(0.3)
+  doc.line(PAGE.margin, y, PAGE.margin + colW, y)
+  if (withSupervisor) doc.line(PAGE.margin + colW + 10, y, PAGE.w - PAGE.margin, y)
+
+  // typed signature above the line
+  if (inspection?.signature) {
+    doc.setFont('times', 'italic')
+    doc.setFontSize(12)
+    doc.setTextColor(...BLACK)
+    doc.text(inspection.signature, PAGE.margin + 2, y - 2)
+  }
+
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(...GRAY)
+  doc.text('Driver Signature', PAGE.margin, y + 5)
+  if (withSupervisor) doc.text('Supervisor Signature', PAGE.margin + colW + 10, y + 5)
+  return y + 12
+}
+
+// ===========================================================================
+// 2. INSPECTION-ONLY REPORT
+// ===========================================================================
+export function generateInspectionReport({ inspection, driver, vehicle, shift }) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  let y = drawHeader(doc, 'VEHICLE INSPECTION REPORT')
+
+  const overall = inspection?.overallResult || 'pass'
+  y = drawInfoBlock(
+    doc,
+    y,
+    [
+      ['Vehicle', vehicle ? `${vehicle.busNum} (${vehicle.make} ${vehicle.model})` : '—'],
+      ['Driver', driver?.name || '—'],
+      ['Date', formatDate(inspection?.date)],
+      ['Time', formatTime(inspection?.time)],
+      ['Odometer', vehicle?.odometer != null ? `${vehicle.odometer.toLocaleString()} km` : '—'],
+      ['Fuel Level', inspection?.fuelLevel || '—'],
+      ['Overall Result', overall.toUpperCase()],
+      ['Inspection ID', inspection?.id || '—'],
+    ],
+    'INSPECTION DETAILS',
+  )
+
+  // Failed items callout box
+  const failed = inspection
+    ? Object.entries(inspection.results || {})
+        .filter(([, v]) => v === 'fail')
+        .map(([k]) => k)
+    : []
+
+  if (failed.length > 0) {
+    const labelMap = {}
+    inspectionGroups.forEach((g) => g.items.forEach((i) => (labelMap[i.key] = i.label)))
+    const boxH = 8 + failed.length * 5
+    doc.setFillColor(253, 232, 234)
+    doc.setDrawColor(...RED)
+    doc.setLineWidth(0.4)
+    doc.roundedRect(PAGE.margin, y, PAGE.w - PAGE.margin * 2, boxH, 2, 2, 'FD')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(9.5)
+    doc.setTextColor(...RED)
+    doc.text(`⚠ ${failed.length} ISSUE(S) REQUIRING ATTENTION`, PAGE.margin + 4, y + 6)
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(8.5)
+    doc.setTextColor(...BLACK)
+    failed.forEach((k, i) => {
+      doc.text(`• ${labelMap[k] || k}`, PAGE.margin + 6, y + 11 + i * 5)
+    })
+    y += boxH + 8
+  }
+
+  // Full grouped inspection table
+  const body = []
+  inspectionGroups.forEach((group) => {
+    group.items.forEach((item, idx) => {
+      const res = inspection?.results?.[item.key]
+      body.push([idx === 0 ? group.label : '', item.label, (res || 'n/a').toUpperCase()])
+    })
+  })
+
+  autoTable(doc, {
+    startY: y,
+    head: [['Category', 'Item', 'Result']],
+    body,
+    theme: 'grid',
+    headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 8.5 },
+    bodyStyles: { fontSize: 8 },
+    margin: { left: PAGE.margin, right: PAGE.margin },
+    columnStyles: {
+      0: { fontStyle: 'bold', cellWidth: 42 },
+      2: { halign: 'center', cellWidth: 28, fontStyle: 'bold' },
+    },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 2) {
+        const v = data.cell.raw
+        if (v === 'FAIL') data.cell.styles.textColor = RED
+        else if (v === 'PASS') data.cell.styles.textColor = GREEN_DARK
+      }
+    },
+  })
+
+  let ny = doc.lastAutoTable.finalY + 8
+  drawNotesAndSignatures(doc, ny, inspection, true)
+
+  drawFooters(doc)
+  doc.save(`Inspection_${vehicle?.busNum?.replace(/\s+/g, '') || 'Vehicle'}_${inspection?.date || ''}.pdf`)
+}
+
+// ===========================================================================
+// 3. OPERATIONS SUMMARY REPORT
+// ===========================================================================
+export function generateOperationsSummary({ rangeLabel, kpis, byDriver, byVehicle, dailyRows }) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  let y = drawHeader(doc, 'OPERATIONS SUMMARY')
+
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(...GRAY)
+  doc.text(`Reporting period: ${rangeLabel}`, PAGE.margin, y)
+  y += 8
+
+  y = drawStatBoxes(doc, y, [
+    { value: kpis.totalTrips, label: 'Total Trips' },
+    { value: kpis.totalPax, label: 'Total Passengers' },
+    { value: kpis.avgTripsPerDay, label: 'Avg Trips / Day' },
+    { value: kpis.totalKm + ' km', label: 'Distance' },
+  ])
+
+  // Per-driver breakdown
+  autoTable(doc, {
+    startY: y,
+    head: [['Driver', 'Shifts', 'Trips', 'Pax→', 'Pax←', 'Total Pax']],
+    body: byDriver.map((d) => [d.name, d.shifts, d.trips, d.paxTo, d.paxFrom, d.totalPax]),
+    theme: 'striped',
+    headStyles: { fillColor: BLACK, textColor: WHITE, fontStyle: 'bold', fontSize: 8.5 },
+    bodyStyles: { fontSize: 8.5 },
+    alternateRowStyles: { fillColor: [248, 248, 246] },
+    margin: { left: PAGE.margin, right: PAGE.margin },
+    columnStyles: { 1: { halign: 'center' }, 2: { halign: 'center' }, 5: { halign: 'center', fontStyle: 'bold' } },
+  })
+
+  let vy = doc.lastAutoTable.finalY + 8
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.setTextColor(...BLACK)
+  doc.text('Fleet Utilization', PAGE.margin, vy)
+  vy += 3
+
+  autoTable(doc, {
+    startY: vy,
+    head: [['Vehicle', 'Trips', 'Total Pax', 'Inspections', 'Failed Items']],
+    body: byVehicle.map((v) => [v.busNum, v.trips, v.totalPax, v.inspections, v.failedItems]),
+    theme: 'striped',
+    headStyles: { fillColor: GREEN, textColor: WHITE, fontStyle: 'bold', fontSize: 8.5 },
+    bodyStyles: { fontSize: 8.5 },
+    alternateRowStyles: { fillColor: [248, 248, 246] },
+    margin: { left: PAGE.margin, right: PAGE.margin },
+    columnStyles: { 1: { halign: 'center' }, 2: { halign: 'center' }, 3: { halign: 'center' }, 4: { halign: 'center' } },
+    didParseCell: (data) => {
+      if (data.section === 'body' && data.column.index === 4 && Number(data.cell.raw) > 0) {
+        data.cell.styles.textColor = RED
+        data.cell.styles.fontStyle = 'bold'
+      }
+    },
+  })
+
+  drawFooters(doc)
+  doc.save(`OperationsSummary_${rangeLabel.replace(/[^\dA-Za-z]+/g, '_')}.pdf`)
+}
+
+export { fuelLevels }
