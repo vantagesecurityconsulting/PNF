@@ -106,6 +106,20 @@ export const timeAgo = (value, nowMs = Date.now()) => {
   return `${days} d ago`
 }
 
+/** ISO → "HH:MM" for a <input type="time"> value */
+export const toTimeInput = (iso) => {
+  if (!iso) return ''
+  const d = new Date(iso)
+  if (isNaN(d)) return ''
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
+
+/** "HH:MM" + "YYYY-MM-DD" → ISO local string (keeps the shift's date) */
+export const fromTimeInput = (value, dateStr) => {
+  if (!value || !dateStr) return null
+  return `${dateStr}T${value}:00`
+}
+
 /** Hours (whole number) since an ISO timestamp */
 export const hoursSince = (value, nowMs = Date.now()) => {
   if (!value) return Infinity

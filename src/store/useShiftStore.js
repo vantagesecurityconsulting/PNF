@@ -138,6 +138,53 @@ export const useShiftStore = create(
         }
       },
 
+      // Undo the most recent logged step. Within a trip it reverts one leg;
+      // at the start of a fresh trip it reopens the previous completed trip.
+      undoLastStep: () => {
+        const s = get()
+        const ct = s.currentTrip
+        if (s.currentStep === 4 && ct.departAirportTime) {
+          set({ currentTrip: { ...ct, departAirportTime: null }, currentStep: 3 })
+        } else if (s.currentStep === 3 && ct.arriveAirportTime) {
+          set({ currentTrip: { ...ct, arriveAirportTime: null }, currentStep: 2 })
+        } else if (s.currentStep === 2 && ct.departLotTime) {
+          set({ currentTrip: { ...ct, departLotTime: null }, currentStep: 1 })
+        } else if (s.currentStep === 1 && !ct.departLotTime && s.trips.length > 0) {
+          const last = s.trips[s.trips.length - 1]
+          set({
+            trips: s.trips.slice(0, -1),
+            currentTripNum: s.currentTripNum - 1,
+            currentStep: 4,
+            currentTrip: {
+              departLotTime: last.departLotTime,
+              arriveAirportTime: last.arriveAirportTime,
+              departAirportTime: last.departAirportTime,
+              arriveLotTime: null,
+              paxToAirport: last.paxToAirport,
+              paxFromAirport: last.paxFromAirport,
+            },
+          })
+        }
+      },
+
+      // Discard the in-progress trip without saving.
+      cancelCurrentTrip: () => set({ currentTrip: emptyTrip(), currentStep: 1 }),
+
+      // Correct a logged time on the in-progress trip.
+      setCurrentTripTime: (field, iso) =>
+        set((s) => ({ currentTrip: { ...s.currentTrip, [field]: iso } })),
+
+      // Edit a saved trip's times / passenger counts (recomputes duration).
+      updateCompletedTrip: (tripNumber, patch) =>
+        set((s) => ({
+          trips: s.trips.map((t) => {
+            if (t.tripNumber !== tripNumber) return t
+            const merged = { ...t, ...patch }
+            merged.durationMin = minutesBetween(merged.departLotTime, merged.arriveLotTime)
+            return merged
+          }),
+        })),
+
       // Inspection actions
       setInspectionItem: (key, value) =>
         set((s) => ({ inspectionResults: { ...s.inspectionResults, [key]: value } })),

@@ -22,6 +22,7 @@ import Fleet from './pages/manager/Fleet'
 import Drivers from './pages/manager/Drivers'
 import DriverDetail from './pages/manager/DriverDetail'
 import Incidents from './pages/manager/Incidents'
+import Alerts from './pages/manager/Alerts'
 import Reports from './pages/manager/Reports'
 import Settings from './pages/manager/Settings'
 import Locations from './pages/manager/admin/Locations'
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="drivers" element={<Drivers />} />
           <Route path="drivers/:driverId" element={<DriverDetail />} />
           <Route path="incidents" element={<Incidents />} />
+          <Route path="alerts" element={<Alerts />} />
           <Route path="reports" element={<Reports />} />
           <Route path="settings" element={<Settings />} />
           <Route path="admin/locations" element={<RequireOwner><Locations /></RequireOwner>} />

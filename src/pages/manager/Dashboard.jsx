@@ -12,6 +12,8 @@ import {
   Send,
   TrendingUp,
   TriangleAlert,
+  Bell,
+  ChevronRight,
 } from 'lucide-react'
 import {
   LineChart,
@@ -36,7 +38,7 @@ import { LoadingState } from '../../components/shared/Spinner'
 import { EmptyState } from '../../components/shared/EmptyState'
 import { Modal } from '../../components/shared/Modal'
 import { useFakeLoad } from '../../hooks/useFakeLoad'
-import { buildDailyTrend, buildActivityFeed } from '../../utils/analytics'
+import { buildDailyTrend, buildActivityFeed, buildAlerts } from '../../utils/analytics'
 import { deriveLiveStatus, colorClass } from '../../utils/status'
 import { formatTime, formatDate } from '../../utils/formatters'
 import { generateOperationsSummary } from '../../utils/pdfGenerator'
@@ -50,8 +52,12 @@ export default function Dashboard() {
   const flagVehicle = useManagerStore((s) => s.flagVehicle)
   const markReportGenerated = useManagerStore((s) => s.markReportGenerated)
 
-  const { drivers, vehicles, shifts, trips, inspections, activeLocationId, referenceToday } = useScope()
+  const { drivers, vehicles, shifts, trips, inspections, incidents, activeLocationId, referenceToday } = useScope()
   const kpis = selectTodayKpisFor(store, activeLocationId)
+  const alerts = useMemo(
+    () => buildAlerts({ vehicles, incidents, drivers, shifts, inspections }, referenceToday),
+    [vehicles, incidents, drivers, shifts, inspections, referenceToday],
+  )
 
   const [flagOpen, setFlagOpen] = useState(false)
   const [flagVehicleId, setFlagVehicleId] = useState('')
@@ -185,6 +191,40 @@ export default function Dashboard() {
 
         {/* Right column */}
         <div className="space-y-6">
+          {/* Alerts */}
+          <Card padded={false}>
+            <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
+              <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+                <Bell size={18} className={alerts.length ? 'text-danger' : 'text-green'} /> Alerts
+                {alerts.length > 0 && (
+                  <span className="tabular flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
+                    {alerts.length}
+                  </span>
+                )}
+              </h2>
+              <button onClick={() => navigate('/manager/alerts')} className="flex items-center gap-1 text-xs font-bold text-green">
+                View all <ChevronRight size={14} />
+              </button>
+            </div>
+            {alerts.length === 0 ? (
+              <div className="px-5 py-6 text-center text-sm font-semibold text-graytext">All clear — nothing needs attention.</div>
+            ) : (
+              alerts.slice(0, 4).map((a) => (
+                <button
+                  key={a.id}
+                  onClick={() => navigate(a.link)}
+                  className="flex w-full items-center gap-3 border-b border-black/5 px-5 py-3 text-left last:border-0 hover:bg-gray-50"
+                >
+                  <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${a.severity === 'high' ? 'bg-danger' : a.severity === 'medium' ? 'bg-amber' : 'bg-gray-400'}`} />
+                  <div className="min-w-0 flex-1">
+                    <div className="truncate text-sm font-bold text-ink">{a.title}</div>
+                    <div className="truncate text-xs text-graytext">{a.detail}</div>
+                  </div>
+                </button>
+              ))
+            )}
+          </Card>
+
           {/* Quick actions */}
           <Card padded>
             <h2 className="mb-3 text-base font-extrabold text-ink">Quick Actions</h2>

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Bus, Wrench, Save, CheckCircle2, XCircle, Route, Calendar, Plus, AlertTriangle, Power } from 'lucide-react'
+import { Bus, Wrench, Save, CheckCircle2, XCircle, Route, Calendar, Plus, AlertTriangle, Power, Fuel } from 'lucide-react'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useScope } from '../../hooks/useScope'
@@ -15,7 +15,7 @@ import { LoadingState } from '../../components/shared/Spinner'
 import { useFakeLoad } from '../../hooks/useFakeLoad'
 import { formatDate, formatNumber } from '../../utils/formatters'
 import { getItemLabel } from '../../data/inspectionItems'
-import { vehicleStats } from '../../utils/analytics'
+import { vehicleStats, fuelStats } from '../../utils/analytics'
 import { getFailedItems } from '../../data/mockInspections'
 import { VEHICLE_STATUS } from '../../utils/status'
 
@@ -69,6 +69,7 @@ export default function Fleet() {
     () => (selected ? vehicleStats(selected.id, shifts, inspections, referenceToday) : null),
     [selected, shifts, inspections, referenceToday],
   )
+  const fuel = useMemo(() => (selected ? fuelStats(selected.id, shifts) : null), [selected, shifts])
 
   const columns = [
     {
@@ -182,6 +183,35 @@ export default function Fleet() {
                 <Info label="Next Service" value={formatDate(selected.nextServiceDue)} />
               </div>
             </Card>
+
+            {/* Fuel economy & log */}
+            <div>
+              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-extrabold uppercase tracking-wide text-graytext">
+                <Fuel size={14} /> Fuel Economy
+              </h3>
+              <div className="grid grid-cols-3 gap-3">
+                <MiniStat icon={Fuel} label="Avg L/100km" value={fuel.avgL100 ?? '—'} />
+                <MiniStat icon={Fuel} label="Total Litres" value={fuel.totalLitres} />
+                <MiniStat icon={Fuel} label="Fill-ups" value={fuel.fills} />
+              </div>
+              {fuel.entries.length > 0 ? (
+                <div className="mt-3 overflow-hidden rounded-xl border border-black/5 bg-white">
+                  <div className="grid grid-cols-4 gap-2 border-b border-black/5 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-graytext">
+                    <span>Date</span><span className="text-right">Litres</span><span className="text-right">km</span><span className="text-right">L/100km</span>
+                  </div>
+                  {fuel.entries.slice(0, 8).map((e, i) => (
+                    <div key={i} className="grid grid-cols-4 gap-2 border-b border-black/5 px-3 py-2 text-sm last:border-0">
+                      <span className="font-semibold text-ink">{formatDate(e.date)}</span>
+                      <span className="tabular text-right">{e.litres} L</span>
+                      <span className="tabular text-right">{e.km != null ? formatNumber(e.km) : '—'}</span>
+                      <span className="tabular text-right font-bold text-ink">{e.l100 ?? '—'}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-graytext">No fuel logged for this vehicle yet.</p>
+              )}
+            </div>
 
             {/* Inspection history */}
             <div>

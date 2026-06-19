@@ -17,10 +17,13 @@ import {
   UserCog,
   LogOut,
   ChevronDown,
+  Bell,
 } from 'lucide-react'
 import { Logo, ParkNFlyMark } from '../shared/Logo'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useAuthStore } from '../../store/useAuthStore'
+import { useScope } from '../../hooks/useScope'
+import { buildAlerts } from '../../utils/analytics'
 
 const NAV = [
   { to: '/manager', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -28,6 +31,7 @@ const NAV = [
   { to: '/manager/fleet', label: 'Fleet', icon: Bus },
   { to: '/manager/drivers', label: 'Staff', icon: Users },
   { to: '/manager/incidents', label: 'Incidents', icon: TriangleAlert },
+  { to: '/manager/alerts', label: 'Alerts', icon: Bell, badge: 'alerts' },
   { to: '/manager/reports', label: 'Reports', icon: FileText },
   { to: '/manager/settings', label: 'Settings', icon: SettingsIcon },
 ]
@@ -51,6 +55,9 @@ export default function ManagerLayout() {
   const isOwner = currentUser?.role === 'owner'
   const activeLocation = locations.find((l) => l.id === activeLocationId)
 
+  const scope = useScope()
+  const alertCount = buildAlerts(scope, scope.referenceToday).length
+
   const handleLogout = () => {
     logout()
     navigate('/manager/login')
@@ -68,7 +75,13 @@ export default function ManagerLayout() {
       {/* Nav */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         {NAV.map((item) => (
-          <NavItem key={item.to} item={item} showLabels={showLabels} onNavigate={() => setMobileOpen(false)} />
+          <NavItem
+            key={item.to}
+            item={item}
+            showLabels={showLabels}
+            badge={item.badge === 'alerts' ? alertCount : 0}
+            onNavigate={() => setMobileOpen(false)}
+          />
         ))}
 
         {isOwner && (
@@ -190,21 +203,31 @@ export default function ManagerLayout() {
   )
 }
 
-function NavItem({ item, showLabels, onNavigate }) {
+function NavItem({ item, showLabels, onNavigate, badge = 0 }) {
   return (
     <NavLink
       to={item.to}
       end={item.end}
       onClick={onNavigate}
       className={({ isActive }) =>
-        `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+        `relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
           isActive ? 'bg-green-light text-green-dark' : 'text-graytext hover:bg-gray-100 hover:text-ink'
         } ${showLabels ? '' : 'justify-center'}`
       }
       title={item.label}
     >
-      <item.icon size={20} strokeWidth={2.2} />
-      {showLabels && item.label}
+      <span className="relative">
+        <item.icon size={20} strokeWidth={2.2} />
+        {badge > 0 && !showLabels && (
+          <span className="absolute -right-1.5 -top-1.5 h-2.5 w-2.5 rounded-full bg-danger ring-2 ring-white" />
+        )}
+      </span>
+      {showLabels && <span className="flex-1">{item.label}</span>}
+      {showLabels && badge > 0 && (
+        <span className="tabular flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
+          {badge}
+        </span>
+      )}
     </NavLink>
   )
 }

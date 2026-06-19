@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bus, PlaneLanding, PlaneTakeoff, MapPin, AlertTriangle, ArrowRight, Clock } from 'lucide-react'
+import { Bus, PlaneLanding, PlaneTakeoff, MapPin, AlertTriangle, ArrowRight, Clock, Undo2, XCircle, Pencil } from 'lucide-react'
 import { useShiftStore, selectTripTotals } from '../../store/useShiftStore'
 import { useToastStore } from '../../store/useToastStore'
 import { TripStatusStrip } from '../../components/shared/TripStatusStrip'
 import { BigButton } from '../../components/shared/BigButton'
 import { PassengerCounter } from '../../components/shared/PassengerCounter'
 import { Card } from '../../components/shared/Card'
-import { formatTime, formatMinutes, elapsedSince, minutesBetween } from '../../utils/formatters'
+import { Button } from '../../components/shared/Button'
+import { Modal } from '../../components/shared/Modal'
+import { formatTime, formatMinutes, elapsedSince, minutesBetween, toTimeInput, fromTimeInput } from '../../utils/formatters'
 
 export default function TripLog() {
   const navigate = useNavigate()
@@ -17,10 +19,17 @@ export default function TripLog() {
   const tripNum = useShiftStore((s) => s.currentTripNum)
   const currentTrip = useShiftStore((s) => s.currentTrip)
   const trips = useShiftStore((s) => s.trips)
+  const shiftDate = useShiftStore((s) => s.shiftDate)
   const logStep = useShiftStore((s) => s.logStep)
   const setPaxToAirport = useShiftStore((s) => s.setPaxToAirport)
   const setPaxFromAirport = useShiftStore((s) => s.setPaxFromAirport)
+  const undoLastStep = useShiftStore((s) => s.undoLastStep)
+  const cancelCurrentTrip = useShiftStore((s) => s.cancelCurrentTrip)
+  const setCurrentTripTime = useShiftStore((s) => s.setCurrentTripTime)
   const addToast = useToastStore((s) => s.addToast)
+
+  const [editOpen, setEditOpen] = useState(false)
+  const [cancelOpen, setCancelOpen] = useState(false)
 
   // live clock for elapsed times
   const [, setTick] = useState(0)
@@ -37,6 +46,22 @@ export default function TripLog() {
 
   const totals = selectTripTotals(trips)
   const lastTrip = trips[trips.length - 1]
+
+  const tripInProgress = step > 1
+  const canUndo = step > 1 || (!currentTrip.departLotTime && trips.length > 0)
+
+  const handleUndo = () => {
+    undoLastStep()
+    addToast('Last step undone', 'warning')
+  }
+  const handleCancel = () => {
+    cancelCurrentTrip()
+    setCancelOpen(false)
+    addToast('Current trip cleared', 'warning')
+  }
+  const editTime = (field, value) => {
+    setCurrentTripTime(field, value ? fromTimeInput(value, shiftDate) : null)
+  }
 
   const handleStep = (n) => {
     logStep(n)
@@ -67,6 +92,27 @@ export default function TripLog() {
       )}
 
       <TripStatusStrip step={step} tripNum={tripNum} />
+
+      {/* Mis-tap recovery controls */}
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant="secondary" icon={Undo2} onClick={handleUndo} disabled={!canUndo}>
+          Undo last step
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          icon={Pencil}
+          onClick={() => setEditOpen(true)}
+          disabled={!currentTrip.departLotTime}
+        >
+          Edit times
+        </Button>
+        {tripInProgress && (
+          <Button size="sm" variant="ghost" icon={XCircle} onClick={() => setCancelOpen(true)} className="text-danger">
+            Cancel trip
+          </Button>
+        )}
+      </div>
 
       {/* Running totals */}
       <div className="grid grid-cols-2 gap-3">
@@ -179,6 +225,54 @@ export default function TripLog() {
           </div>
         </Card>
       )}
+
+      {/* Edit current-trip times */}
+      <Modal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title={`Edit Trip ${tripNum} Times`}
+        footer={<Button onClick={() => setEditOpen(false)}>Done</Button>}
+      >
+        <p className="mb-3 text-sm text-graytext">Correct any mistapped time for the current trip.</p>
+        <div className="space-y-3">
+          <TimeEditRow label="Departed lot" field="departLotTime" value={currentTrip.departLotTime} onChange={editTime} />
+          <TimeEditRow label="Arrived airport" field="arriveAirportTime" value={currentTrip.arriveAirportTime} onChange={editTime} />
+          <TimeEditRow label="Departed airport" field="departAirportTime" value={currentTrip.departAirportTime} onChange={editTime} />
+          <TimeEditRow label="Arrived lot" field="arriveLotTime" value={currentTrip.arriveLotTime} onChange={editTime} />
+        </div>
+      </Modal>
+
+      {/* Cancel trip confirm */}
+      <Modal
+        open={cancelOpen}
+        onClose={() => setCancelOpen(false)}
+        title="Cancel current trip?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setCancelOpen(false)}>Keep Trip</Button>
+            <Button variant="danger" onClick={handleCancel}>Discard Trip</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-graytext">
+          This clears the in-progress trip's logged times and starts the trip over. Completed trips are not affected.
+        </p>
+      </Modal>
+    </div>
+  )
+}
+
+function TimeEditRow({ label, field, value, onChange }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-semibold text-ink">{label}</span>
+      <input
+        type="time"
+        value={toTimeInput(value)}
+        disabled={!value}
+        onChange={(e) => onChange(field, e.target.value)}
+        className="tabular h-10 rounded-lg border border-gray-300 bg-white px-3 font-semibold text-ink outline-none focus:border-green disabled:bg-gray-50 disabled:text-gray-400"
+      />
     </div>
   )
 }

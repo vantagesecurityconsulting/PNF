@@ -6,7 +6,7 @@
  * fields / rollups once migrated; kept client-side here for the concept.
  */
 
-import { dateKey } from './formatters'
+import { dateKey, formatDate } from './formatters'
 
 const HOURS = Array.from({ length: 18 }, (_, i) => i + 6) // 6am … 11pm
 
@@ -167,6 +167,84 @@ export function vehicleStats(vehicleId, shifts, inspections, referenceToday) {
     inspections: myInspections,
     inspectionCount: myInspections.length,
     failedItems: failedCount,
+  }
+}
+
+/**
+ * Build the manager alerts feed from current data: maintenance due/overdue,
+ * flagged/out-of-service vehicles, open incidents, and low-compliance drivers.
+ */
+export function buildAlerts({ vehicles = [], incidents = [], drivers = [], shifts = [], inspections = [] }, referenceToday) {
+  const alerts = []
+  const daysUntil = (dateStr) =>
+    Math.round((new Date(`${dateStr}T12:00:00`) - new Date(`${referenceToday}T12:00:00`)) / 86400000)
+
+  vehicles.forEach((v) => {
+    if (v.status === 'out-of-service') {
+      alerts.push({ id: `down-${v.id}`, severity: 'high', category: 'Fleet', title: `${v.busNum} is out of service`, detail: v.downReason || 'Marked out of service', link: '/manager/fleet' })
+    } else if (v.status === 'flagged') {
+      alerts.push({ id: `flag-${v.id}`, severity: 'medium', category: 'Fleet', title: `${v.busNum} flagged`, detail: 'Failed inspection — needs review', link: '/manager/fleet' })
+    }
+    if (v.nextServiceDue && v.status !== 'out-of-service') {
+      const d = daysUntil(v.nextServiceDue)
+      if (d < 0) {
+        alerts.push({ id: `svc-${v.id}`, severity: 'high', category: 'Maintenance', title: `${v.busNum} service overdue`, detail: `Was due ${formatDate(v.nextServiceDue)} (${-d}d ago)`, link: '/manager/fleet' })
+      } else if (d <= 7) {
+        alerts.push({ id: `svc-${v.id}`, severity: 'medium', category: 'Maintenance', title: `${v.busNum} service due soon`, detail: `Due in ${d}d · ${formatDate(v.nextServiceDue)}`, link: '/manager/fleet' })
+      }
+    }
+  })
+
+  incidents
+    .filter((i) => i.status !== 'resolved')
+    .forEach((i) => {
+      const sev = i.severity === 'Critical' || i.severity === 'High' ? 'high' : 'medium'
+      alerts.push({ id: `inc-${i.id}`, severity: sev, category: 'Incident', title: `${i.type} — ${i.severity}`, detail: `${i.reportedBy || 'Driver'} · ${i.status}`, link: '/manager/incidents' })
+    })
+
+  drivers.forEach((d) => {
+    const st = driverStats(d.id, shifts, inspections, referenceToday)
+    if (st.endedShifts >= 3 && st.complianceRate < 80) {
+      alerts.push({
+        id: `comp-${d.id}`,
+        severity: st.complianceRate < 60 ? 'high' : 'medium',
+        category: 'Compliance',
+        title: `${d.name}: low inspection compliance`,
+        detail: `${st.complianceRate}% · ${st.missedInspections} missed/incomplete`,
+        link: `/manager/drivers/${d.id}`,
+      })
+    }
+  })
+
+  const order = { high: 0, medium: 1, low: 2 }
+  return alerts.sort((a, b) => order[a.severity] - order[b.severity])
+}
+
+/** Fuel log + economy (L/100km) for a vehicle, derived from shift records. */
+export function fuelStats(vehicleId, shifts) {
+  const entries = shifts
+    .filter((s) => s.vehicleId === vehicleId && s.fuelLitres != null && s.fuelLitres > 0)
+    .map((s) => {
+      const km = s.odoEnd != null && s.odoStart != null ? s.odoEnd - s.odoStart : null
+      return {
+        date: s.date,
+        litres: s.fuelLitres,
+        km,
+        l100: km && km > 0 ? Math.round((s.fuelLitres / km) * 1000) / 10 : null,
+      }
+    })
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+
+  const totalLitres = entries.reduce((sum, e) => sum + e.litres, 0)
+  const totalKm = entries.reduce((sum, e) => sum + (e.km || 0), 0)
+  const avgL100 = totalKm > 0 ? Math.round((totalLitres / totalKm) * 1000) / 10 : null
+
+  return {
+    entries,
+    fills: entries.length,
+    totalLitres: Math.round(totalLitres * 10) / 10,
+    totalKm,
+    avgL100,
   }
 }
 

@@ -1,17 +1,22 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ChevronDown, ChevronUp, Route, Users, Clock, Bus } from 'lucide-react'
+import { ChevronDown, ChevronUp, Route, Users, Clock, Bus, Pencil } from 'lucide-react'
 import { useShiftStore, selectTripTotals } from '../../store/useShiftStore'
 import { Card } from '../../components/shared/Card'
 import { EmptyState } from '../../components/shared/EmptyState'
 import { Button } from '../../components/shared/Button'
-import { formatTime, formatMinutes } from '../../utils/formatters'
+import { Modal } from '../../components/shared/Modal'
+import { PassengerCounter } from '../../components/shared/PassengerCounter'
+import { formatTime, formatMinutes, toTimeInput, fromTimeInput } from '../../utils/formatters'
 
 export default function DriverTrips() {
   const navigate = useNavigate()
   const shiftStarted = useShiftStore((s) => s.shiftStarted)
   const trips = useShiftStore((s) => s.trips)
+  const shiftDate = useShiftStore((s) => s.shiftDate)
+  const updateCompletedTrip = useShiftStore((s) => s.updateCompletedTrip)
   const [expanded, setExpanded] = useState(null)
+  const [editTrip, setEditTrip] = useState(null) // draft being edited
 
   if (!shiftStarted) {
     navigate('/driver', { replace: true })
@@ -19,6 +24,15 @@ export default function DriverTrips() {
   }
 
   const totals = selectTripTotals(trips)
+
+  const openEdit = (trip) => setEditTrip({ ...trip })
+  const saveEdit = () => {
+    const { tripNumber, departLotTime, arriveAirportTime, departAirportTime, arriveLotTime, paxToAirport, paxFromAirport } = editTrip
+    updateCompletedTrip(tripNumber, { departLotTime, arriveAirportTime, departAirportTime, arriveLotTime, paxToAirport, paxFromAirport })
+    setEditTrip(null)
+  }
+  const setEditField = (field, val) => setEditTrip((t) => ({ ...t, [field]: val }))
+  const setEditTime = (field, val) => setEditField(field, val ? fromTimeInput(val, shiftDate) : null)
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
@@ -84,6 +98,9 @@ export default function DriverTrips() {
                       <Detail label="Passengers → airport" value={trip.paxToAirport} />
                       <Detail label="Passengers ← airport" value={trip.paxFromAirport} />
                     </div>
+                    <Button className="mt-3" size="sm" variant="secondary" icon={Pencil} onClick={() => openEdit(trip)}>
+                      Edit trip
+                    </Button>
                   </div>
                 )}
               </Card>
@@ -91,6 +108,51 @@ export default function DriverTrips() {
           })}
         </div>
       )}
+      {/* Edit completed trip */}
+      <Modal
+        open={!!editTrip}
+        onClose={() => setEditTrip(null)}
+        title={editTrip ? `Edit Trip ${editTrip.tripNumber}` : ''}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setEditTrip(null)}>Cancel</Button>
+            <Button onClick={saveEdit}>Save Changes</Button>
+          </>
+        }
+      >
+        {editTrip && (
+          <div className="space-y-3">
+            <EditTimeRow label="Left lot" field="departLotTime" value={editTrip.departLotTime} onChange={setEditTime} />
+            <EditTimeRow label="Arrived airport" field="arriveAirportTime" value={editTrip.arriveAirportTime} onChange={setEditTime} />
+            <EditTimeRow label="Left airport" field="departAirportTime" value={editTrip.departAirportTime} onChange={setEditTime} />
+            <EditTimeRow label="Arrived lot" field="arriveLotTime" value={editTrip.arriveLotTime} onChange={setEditTime} />
+            <div className="grid grid-cols-2 gap-3 border-t border-black/5 pt-3">
+              <div>
+                <div className="mb-1 text-xs font-bold uppercase tracking-wide text-graytext">Pax → airport</div>
+                <PassengerCounter value={editTrip.paxToAirport} onChange={(v) => setEditField('paxToAirport', v)} />
+              </div>
+              <div>
+                <div className="mb-1 text-xs font-bold uppercase tracking-wide text-graytext">Pax ← airport</div>
+                <PassengerCounter value={editTrip.paxFromAirport} onChange={(v) => setEditField('paxFromAirport', v)} />
+              </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+    </div>
+  )
+}
+
+function EditTimeRow({ label, field, value, onChange }) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-semibold text-ink">{label}</span>
+      <input
+        type="time"
+        value={toTimeInput(value)}
+        onChange={(e) => onChange(field, e.target.value)}
+        className="tabular h-10 rounded-lg border border-gray-300 bg-white px-3 font-semibold text-ink outline-none focus:border-green"
+      />
     </div>
   )
 }
