@@ -1,10 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Route, Users, ShieldCheck, CalendarClock, Bus } from 'lucide-react'
+import { ArrowLeft, Route, Users, ShieldCheck, CalendarClock, Bus, Save, StickyNote } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useManagerStore } from '../../store/useManagerStore'
-import { getDriverById } from '../../data/mockDrivers'
-import { getVehicleLabel } from '../../data/mockVehicles'
+import { useToastStore } from '../../store/useToastStore'
 import { Card } from '../../components/shared/Card'
 import { Badge } from '../../components/shared/Badge'
 import { KpiCard } from '../../components/shared/KpiCard'
@@ -23,8 +22,12 @@ export default function DriverDetail() {
   const loading = useFakeLoad(700, [driverId])
   const store = useManagerStore()
   const { shifts, inspections, referenceToday } = store
+  const updateDriverNotes = useManagerStore((s) => s.updateDriverNotes)
+  const addToast = useToastStore((s) => s.addToast)
 
-  const driver = getDriverById(driverId)
+  const driver = store.drivers.find((d) => d.id === driverId)
+  const [notes, setNotes] = useState('')
+  useEffect(() => { setNotes(driver?.notes || '') }, [driver?.id, driver?.notes])
   const stats = useMemo(
     () => driverStats(driverId, shifts, inspections, referenceToday),
     [driverId, shifts, inspections, referenceToday],
@@ -49,7 +52,7 @@ export default function DriverDetail() {
 
   const shiftColumns = [
     { key: 'date', header: 'Date', render: (s) => <span className="font-semibold">{formatDateShort(s.date)}</span> },
-    { key: 'vehicle', header: 'Vehicle', render: (s) => getVehicleLabel(s.vehicleId) },
+    { key: 'vehicle', header: 'Vehicle', render: (s) => store.vehicles.find((v) => v.id === s.vehicleId)?.busNum || '—' },
     {
       key: 'trips',
       header: 'Trips',
@@ -113,6 +116,29 @@ export default function DriverDetail() {
         <KpiCard label="Avg Trips / Shift" value={stats.avgTripsPerShift} icon={CalendarClock} color="amber" />
         <KpiCard label="Inspection Compliance" value={`${stats.complianceRate}%`} icon={ShieldCheck} color="green" />
       </div>
+
+      {/* Manager notes */}
+      <Card padded>
+        <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <StickyNote size={18} className="text-amber" /> Manager Notes
+          <span className="text-xs font-semibold text-graytext">(private — not visible to drivers)</span>
+        </h2>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+          placeholder="Performance notes, certifications, reminders, HR follow-ups…"
+          className="mt-3 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
+        />
+        <Button
+          className="mt-2"
+          size="sm"
+          icon={Save}
+          onClick={() => { updateDriverNotes(driver.id, notes); addToast('Notes saved', 'success') }}
+        >
+          Save Notes
+        </Button>
+      </Card>
 
       {/* 30-day chart */}
       <Card padded>

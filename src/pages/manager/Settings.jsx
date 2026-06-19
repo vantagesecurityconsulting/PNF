@@ -1,10 +1,12 @@
-import { useState } from 'react'
-import { Settings as SettingsIcon, MapPin, ListChecks, Bell, Database, Save, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Settings as SettingsIcon, MapPin, ListChecks, Bell, Database, Save, ShieldAlert, RotateCcw } from 'lucide-react'
 import { useManagerStore } from '../../store/useManagerStore'
+import { useAuthStore } from '../../store/useAuthStore'
 import { useToastStore } from '../../store/useToastStore'
 import { SectionHeader } from '../../components/shared/SectionHeader'
 import { Card } from '../../components/shared/Card'
 import { Button } from '../../components/shared/Button'
+import { Modal } from '../../components/shared/Modal'
 import { ParkNFlyMark } from '../../components/shared/Logo'
 import { inspectionGroups } from '../../data/inspectionItems'
 
@@ -13,21 +15,36 @@ const NOTIFICATION_LABELS = {
   dailySummaryEmail: 'Daily summary email',
   shiftReminderTexts: 'Shift reminder texts to drivers',
   maintenanceDueAlerts: 'Maintenance-due alerts',
+  incidentAlerts: 'Incident report alerts',
 }
 
 export default function Settings() {
   const store = useManagerStore()
-  const { settings, checklist } = store
-  const updateSettings = useManagerStore((s) => s.updateSettings)
+  const { settings, checklist, criticalItems, locations } = store
+  const updateLocation = useManagerStore((s) => s.updateLocation)
   const toggleNotification = useManagerStore((s) => s.toggleNotification)
   const toggleChecklistItem = useManagerStore((s) => s.toggleChecklistItem)
+  const toggleCriticalItem = useManagerStore((s) => s.toggleCriticalItem)
+  const resetSystem = useManagerStore((s) => s.resetSystem)
   const addToast = useToastStore((s) => s.addToast)
 
-  const [locName, setLocName] = useState(settings.locationName)
-  const [locCode, setLocCode] = useState(settings.locationCode)
+  const currentUser = useAuthStore((s) => s.currentUser)
+  const activeLocationId = useAuthStore((s) => s.activeLocationId)
+  const isOwner = currentUser?.role === 'owner'
+
+  const activeLocation = locations.find((l) => l.id === activeLocationId)
+  const [locName, setLocName] = useState(activeLocation?.name || '')
+  const [locCode, setLocCode] = useState(activeLocation?.code || '')
+  const [resetOpen, setResetOpen] = useState(false)
+
+  useEffect(() => {
+    setLocName(activeLocation?.name || '')
+    setLocCode(activeLocation?.code || '')
+  }, [activeLocation?.id])
 
   const saveLocation = () => {
-    updateSettings({ locationName: locName, locationCode: locCode })
+    if (!activeLocation) return
+    updateLocation(activeLocation.id, { name: locName, code: locCode.toUpperCase() })
     addToast('Location settings saved', 'success')
   }
 
@@ -35,39 +52,25 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Settings" subtitle="Location, checklist & integration configuration" icon={SettingsIcon} />
+      <SectionHeader title="Settings" subtitle="Location, checklist, safety & integration configuration" icon={SettingsIcon} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Location */}
         <Card padded>
           <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
-            <MapPin size={18} className="text-green" /> Location
+            <MapPin size={18} className="text-green" /> Location — {activeLocation?.city || '—'}
           </h2>
           <div className="mt-4 space-y-4">
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-graytext">
-                Location Name
-              </label>
-              <input
-                value={locName}
-                onChange={(e) => setLocName(e.target.value)}
-                className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green"
-              />
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-graytext">Location Name</label>
+              <input value={locName} onChange={(e) => setLocName(e.target.value)} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green" />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-graytext">
-                Location Code
-              </label>
-              <input
-                value={locCode}
-                onChange={(e) => setLocCode(e.target.value.toUpperCase())}
-                maxLength={4}
-                className="h-10 w-32 rounded-lg border border-gray-300 bg-white px-3 text-sm font-bold uppercase tracking-wider text-ink outline-none focus:border-green"
-              />
+              <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-graytext">Airport Code</label>
+              <input value={locCode} onChange={(e) => setLocCode(e.target.value.toUpperCase())} maxLength={4} className="h-10 w-32 rounded-lg border border-gray-300 bg-white px-3 text-sm font-bold uppercase tracking-wider text-ink outline-none focus:border-green" />
             </div>
-            <Button size="sm" icon={Save} onClick={saveLocation}>
-              Save Location
-            </Button>
+            <Button size="sm" icon={Save} onClick={saveLocation}>Save Location</Button>
+            {isOwner && <p className="text-xs text-graytext">Manage all locations under Owner Admin → Locations.</p>}
           </div>
         </Card>
 
@@ -80,25 +83,24 @@ export default function Settings() {
             {Object.entries(NOTIFICATION_LABELS).map(([key, label]) => (
               <div key={key} className="flex items-center justify-between py-2">
                 <span className="text-sm font-semibold text-ink">{label}</span>
-                <Toggle checked={settings.notifications[key]} onChange={() => toggleNotification(key)} />
+                <Toggle checked={!!settings.notifications[key]} onChange={() => toggleNotification(key)} />
               </div>
             ))}
           </div>
         </Card>
       </div>
 
-      {/* Inspection checklist manager */}
+      {/* Critical / auto-pull items */}
       <Card padded>
         <div className="flex items-center justify-between">
           <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
-            <ListChecks size={18} className="text-green" /> Inspection Checklist
+            <ShieldAlert size={18} className="text-danger" /> Unsafe Items — Auto-Pull from Service
           </h2>
-          <span className="tabular text-sm font-bold text-graytext">
-            {activeCount} of {checklist.length} items active
-          </span>
+          <span className="tabular text-sm font-bold text-graytext">{criticalItems.length} critical items</span>
         </div>
         <p className="mt-1 text-sm text-graytext">
-          Toggle items on or off. Inactive items are hidden from the driver pre-trip inspection.
+          If a driver marks any of these items as <span className="font-bold text-danger">FAIL</span> during a
+          pre-trip inspection, the bus is automatically taken out of service. Adjust which items count as unsafe.
         </p>
 
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -109,16 +111,44 @@ export default function Settings() {
               </h3>
               <div className="space-y-1.5">
                 {group.items.map((item) => {
+                  const isCritical = criticalItems.includes(item.key)
+                  return (
+                    <div key={item.key} className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-3 py-2">
+                      <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                        {isCritical && <ShieldAlert size={13} className="text-danger" />}
+                        {item.label}
+                      </span>
+                      <Toggle checked={isCritical} onChange={() => toggleCriticalItem(item.key)} danger />
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+
+      {/* Inspection checklist manager */}
+      <Card padded>
+        <div className="flex items-center justify-between">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+            <ListChecks size={18} className="text-green" /> Inspection Checklist
+          </h2>
+          <span className="tabular text-sm font-bold text-graytext">{activeCount} of {checklist.length} items active</span>
+        </div>
+        <p className="mt-1 text-sm text-graytext">Inactive items are hidden from the driver pre-trip inspection.</p>
+
+        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          {inspectionGroups.map((group) => (
+            <div key={group.key}>
+              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-extrabold text-ink"><span>{group.icon}</span> {group.label}</h3>
+              <div className="space-y-1.5">
+                {group.items.map((item) => {
                   const cfg = checklist.find((c) => c.key === item.key)
                   const active = cfg?.active ?? true
                   return (
-                    <div
-                      key={item.key}
-                      className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-3 py-2"
-                    >
-                      <span className={`text-sm font-semibold ${active ? 'text-ink' : 'text-gray-400 line-through'}`}>
-                        {item.label}
-                      </span>
+                    <div key={item.key} className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-3 py-2">
+                      <span className={`text-sm font-semibold ${active ? 'text-ink' : 'text-gray-400 line-through'}`}>{item.label}</span>
                       <Toggle checked={active} onChange={() => toggleChecklistItem(item.key)} />
                     </div>
                   )
@@ -129,7 +159,7 @@ export default function Settings() {
         </div>
       </Card>
 
-      {/* Airtable integration placeholder */}
+      {/* Airtable placeholder */}
       <Card padded className="border-dashed border-2 border-gray-200 bg-gray-50/60">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
@@ -139,45 +169,69 @@ export default function Settings() {
             <div>
               <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
                 Airtable Integration
-                <span className="rounded-full bg-amber/15 px-2 py-0.5 text-xs font-bold text-amber">
-                  Coming Soon
-                </span>
+                <span className="rounded-full bg-amber/15 px-2 py-0.5 text-xs font-bold text-amber">Coming Soon</span>
               </h2>
               <p className="mt-0.5 max-w-md text-sm text-graytext">
-                Connect ShuttleLog to the <span className="font-semibold">ParkNFly_Halifax</span> Airtable base
-                to sync drivers, vehicles, shifts, trips, and inspections in real time.
+                Connect ShuttleLog to the <span className="font-semibold">ParkNFly_Halifax</span> Airtable base to sync
+                locations, accounts, staff, vehicles, shifts, trips, inspections, and incidents in real time. This also
+                replaces the simulated login with real authentication.
               </p>
             </div>
           </div>
-          <Button variant="secondary" disabled>
-            Connect Airtable
-          </Button>
+          <Button variant="secondary" disabled>Connect Airtable</Button>
         </div>
       </Card>
 
+      {/* Owner: reset system */}
+      {isOwner && (
+        <Card padded className="border-danger/20">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+            <RotateCcw size={18} className="text-danger" /> Reset System Data
+          </h2>
+          <p className="mt-1 text-sm text-graytext">
+            Wipes everything you've added (locations, managers, staff, vehicles, incidents, shifts, notes) from this
+            browser and restores the original demo dataset. Cannot be undone.
+          </p>
+          <Button className="mt-3" variant="danger" icon={RotateCcw} onClick={() => setResetOpen(true)}>
+            Reset to Demo Data
+          </Button>
+        </Card>
+      )}
+
       <div className="flex items-center justify-center gap-2 pb-2 text-xs text-graytext">
         <ParkNFlyMark size={18} />
-        ShuttleLog v1.0 Concept · Built for Park'N Fly Halifax · June 2026
+        ShuttleLog v1.0 Concept · Built for Park'N Fly · June 2026
       </div>
+
+      <Modal
+        open={resetOpen}
+        onClose={() => setResetOpen(false)}
+        title="Reset all system data?"
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setResetOpen(false)}>Cancel</Button>
+            <Button variant="danger" onClick={() => { resetSystem(); setResetOpen(false); addToast('System reset to demo data', 'warning') }}>Reset Everything</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-graytext">
+          This permanently clears all locally-stored data and reloads the original seed data. Anything you've added will be lost.
+        </p>
+      </Modal>
     </div>
   )
 }
 
-function Toggle({ checked, onChange }) {
+function Toggle({ checked, onChange, danger }) {
+  const onColor = danger ? 'bg-danger' : 'bg-green'
   return (
     <button
       role="switch"
       aria-checked={checked}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${
-        checked ? 'bg-green' : 'bg-gray-300'
-      }`}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? onColor : 'bg-gray-300'}`}
     >
-      <span
-        className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${
-          checked ? 'translate-x-[22px]' : 'translate-x-0.5'
-        }`}
-      />
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
     </button>
   )
 }

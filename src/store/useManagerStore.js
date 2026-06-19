@@ -1,134 +1,295 @@
 /**
- * useManagerStore — all shifts, trips, drivers, vehicles, inspections (manager).
+ * useManagerStore — system of record for the manager/owner side.
  *
- * AIRTABLE: This store hydrates from mock data files today. On migration each
- * collection becomes a fetch hook against the corresponding Airtable table:
- *   drivers      → GET /Drivers
- *   vehicles     → GET /Vehicles
- *   shifts       → GET /Shifts (+ linked /Trips)
- *   inspections  → GET /Inspections
- *   settings     → GET /Location_Settings + /Inspection_Checklist_Items
- * Mutations (flag vehicle, edit notes, toggle checklist item) become PATCH calls.
+ * Holds locations, accounts (owner + managers), staff (drivers), vehicles,
+ * shifts, trips, inspections, incidents, and configuration. Seeded from the
+ * mock data files, then PERSISTED to localStorage so everything you add
+ * (locations, managers, staff, vehicles, incidents, notes) survives reloads.
+ *
+ * AIRTABLE: each collection maps to an Airtable table; every mutation below
+ * becomes a POST/PATCH. Swap the seed imports + persist layer for fetch hooks.
  */
 
 import { create } from 'zustand'
-import { mockDrivers } from '../data/mockDrivers'
+import { persist } from 'zustand/middleware'
+import { mockDrivers, initialsFromName } from '../data/mockDrivers'
 import { mockVehicles } from '../data/mockVehicles'
-import { mockShifts, allTrips, REFERENCE_TODAY } from '../data/mockShifts'
+import { mockShifts, flattenTrips, REFERENCE_TODAY } from '../data/mockShifts'
 import { mockInspections } from '../data/mockInspections'
-import { inspectionGroups } from '../data/inspectionItems'
+import { mockLocations } from '../data/mockLocations'
+import { mockAccounts } from '../data/mockAccounts'
+import { mockIncidents } from '../data/mockIncidents'
+import { inspectionGroups, defaultCriticalItems } from '../data/inspectionItems'
 
-// Seed the checklist "active" config from the canonical item list.
 const initialChecklist = inspectionGroups.flatMap((g) =>
   g.items.map((i) => ({ key: i.key, label: i.label, category: g.label, active: true })),
 )
 
-export const useManagerStore = create((set, get) => ({
-  // Hydrated collections (clone so mutations don't touch the seed modules)
+// Fresh seed snapshot (used on first load and on "reset system").
+const seed = () => ({
+  locations: mockLocations.map((l) => ({ ...l })),
+  accounts: mockAccounts.map((a) => ({ ...a })),
   drivers: mockDrivers.map((d) => ({ ...d })),
   vehicles: mockVehicles.map((v) => ({ ...v })),
-  shifts: mockShifts,
-  trips: allTrips,
-  inspections: mockInspections,
+  shifts: mockShifts.map((s) => ({ ...s })),
+  trips: flattenTrips(mockShifts),
+  inspections: mockInspections.map((i) => ({ ...i })),
+  incidents: mockIncidents.map((i) => ({ ...i })),
   referenceToday: REFERENCE_TODAY,
-
-  // Settings
   settings: {
-    locationName: 'Halifax, NS',
-    locationCode: 'YHZ',
     notifications: {
       failedInspectionAlerts: true,
       dailySummaryEmail: true,
       shiftReminderTexts: false,
       maintenanceDueAlerts: true,
+      incidentAlerts: true,
     },
   },
   checklist: initialChecklist,
+  criticalItems: [...defaultCriticalItems],
+  reportTimestamps: { daily: null, inspection: null, operations: null, incident: null },
+})
 
-  // Report generation timestamps (per report type)
-  reportTimestamps: {
-    daily: null,
-    inspection: null,
-    operations: null,
-  },
+let seq = Date.now()
+const newId = (prefix) => `${prefix}-${(seq++).toString(36).toUpperCase()}`
 
-  // ---- Mutations ----------------------------------------------------------
-  // AIRTABLE: PATCH /Vehicles → Status = 'flagged'
-  flagVehicle: (vehicleId, flagged = true) =>
-    set((s) => ({
-      vehicles: s.vehicles.map((v) =>
-        v.id === vehicleId
-          ? { ...v, status: flagged ? 'flagged' : v.inspectionResult === 'fail' ? 'flagged' : 'active' }
-          : v,
-      ),
-    })),
+export const useManagerStore = create(
+  persist(
+    (set, get) => ({
+      ...seed(),
 
-  setVehicleStatus: (vehicleId, status) =>
-    set((s) => ({
-      vehicles: s.vehicles.map((v) => (v.id === vehicleId ? { ...v, status } : v)),
-    })),
+      // ---- Locations (Owner) ------------------------------------------------
+      // AIRTABLE: POST /Locations
+      addLocation: ({ name, code, city, province }) =>
+        set((s) => ({
+          locations: [
+            ...s.locations,
+            { id: newId('LOC'), name, code: code.toUpperCase(), city, province, active: true },
+          ],
+        })),
+      updateLocation: (id, partial) =>
+        set((s) => ({ locations: s.locations.map((l) => (l.id === id ? { ...l, ...partial } : l)) })),
+      toggleLocationActive: (id) =>
+        set((s) => ({ locations: s.locations.map((l) => (l.id === id ? { ...l, active: !l.active } : l)) })),
 
-  // AIRTABLE: PATCH /Vehicles → Maintenance_Notes
-  updateMaintenanceNotes: (vehicleId, notes) =>
-    set((s) => ({
-      vehicles: s.vehicles.map((v) =>
-        v.id === vehicleId ? { ...v, maintenanceNotes: notes } : v,
-      ),
-    })),
+      // ---- Accounts / Managers (Owner) -------------------------------------
+      // AIRTABLE: POST /Accounts (role = manager)
+      addManager: ({ name, email, password, locationId }) =>
+        set((s) => ({
+          accounts: [
+            ...s.accounts,
+            { id: newId('ACC'), name, email, password, role: 'manager', locationId },
+          ],
+        })),
+      removeManager: (id) =>
+        set((s) => ({ accounts: s.accounts.filter((a) => a.id !== id || a.role === 'owner') })),
 
-  // AIRTABLE: PATCH /Location_Settings
-  updateSettings: (partial) =>
-    set((s) => ({ settings: { ...s.settings, ...partial } })),
+      // ---- Staff / Drivers (Manager) ---------------------------------------
+      // AIRTABLE: POST /Drivers
+      addStaff: ({ name, employeeId, locationId }) =>
+        set((s) => ({
+          drivers: [
+            ...s.drivers,
+            {
+              id: newId('D'),
+              name,
+              initials: initialsFromName(name),
+              employeeId,
+              status: 'active',
+              locationId,
+              notes: '',
+            },
+          ],
+        })),
+      updateStaff: (id, partial) =>
+        set((s) => ({ drivers: s.drivers.map((d) => (d.id === id ? { ...d, ...partial } : d)) })),
+      updateDriverNotes: (id, notes) =>
+        set((s) => ({ drivers: s.drivers.map((d) => (d.id === id ? { ...d, notes } : d)) })),
 
-  toggleNotification: (key) =>
-    set((s) => ({
-      settings: {
-        ...s.settings,
-        notifications: { ...s.settings.notifications, [key]: !s.settings.notifications[key] },
-      },
-    })),
+      // ---- Vehicles (Manager) ----------------------------------------------
+      // AIRTABLE: POST /Vehicles
+      addVehicle: ({ busNum, make, model, year, capacity, odometer, locationId }) =>
+        set((s) => ({
+          vehicles: [
+            ...s.vehicles,
+            {
+              id: newId('V'),
+              busNum,
+              make,
+              model,
+              year: Number(year),
+              capacity: Number(capacity),
+              odometer: Number(odometer) || 0,
+              status: 'idle',
+              lastInspection: null,
+              inspectionResult: null,
+              nextServiceDue: null,
+              maintenanceNotes: 'Newly added vehicle — awaiting first inspection.',
+              locationId,
+            },
+          ],
+        })),
+      // AIRTABLE: PATCH /Vehicles → Status
+      setVehicleStatus: (vehicleId, status, reason) =>
+        set((s) => ({
+          vehicles: s.vehicles.map((v) =>
+            v.id === vehicleId
+              ? { ...v, status, downReason: status === 'out-of-service' ? reason || v.downReason : null }
+              : v,
+          ),
+        })),
+      flagVehicle: (vehicleId, flagged = true) =>
+        set((s) => ({
+          vehicles: s.vehicles.map((v) =>
+            v.id === vehicleId ? { ...v, status: flagged ? 'flagged' : 'active' } : v,
+          ),
+        })),
+      updateMaintenanceNotes: (vehicleId, notes) =>
+        set((s) => ({
+          vehicles: s.vehicles.map((v) => (v.id === vehicleId ? { ...v, maintenanceNotes: notes } : v)),
+        })),
 
-  // AIRTABLE: PATCH /Inspection_Checklist_Items → Active
-  toggleChecklistItem: (key) =>
-    set((s) => ({
-      checklist: s.checklist.map((c) => (c.key === key ? { ...c, active: !c.active } : c)),
-    })),
+      // ---- Incidents -------------------------------------------------------
+      // AIRTABLE: POST /Incidents
+      addIncident: (incident) =>
+        set((s) => ({
+          incidents: [
+            {
+              id: newId('INC'),
+              status: 'open',
+              managerNotes: '',
+              createdAt: new Date().toISOString(),
+              ...incident,
+            },
+            ...s.incidents,
+          ],
+        })),
+      updateIncident: (id, partial) =>
+        set((s) => ({ incidents: s.incidents.map((i) => (i.id === id ? { ...i, ...partial } : i)) })),
 
-  markReportGenerated: (type) =>
-    set((s) => ({
-      reportTimestamps: { ...s.reportTimestamps, [type]: new Date().toISOString() },
-    })),
-}))
+      // ---- Critical / auto-pull config (Manager) ---------------------------
+      toggleCriticalItem: (key) =>
+        set((s) => ({
+          criticalItems: s.criticalItems.includes(key)
+            ? s.criticalItems.filter((k) => k !== key)
+            : [...s.criticalItems, key],
+        })),
 
-// ---- Aggregation selectors (pure functions over store data) --------------
+      // ---- Commit a finished driver shift into the system ------------------
+      // Called by the driver app on End Shift. Appends the shift + inspection,
+      // updates the vehicle, and auto-pulls the bus if a critical item failed.
+      // AIRTABLE: POST /Shifts, POST /Inspections, PATCH /Vehicles
+      commitShift: ({ shift, inspection, incidents = [] }) =>
+        set((s) => {
+          const shifts = [...s.shifts, shift]
+          const inspections = inspection ? [...s.inspections, inspection] : s.inspections
 
-export const selectTodayShifts = (state) =>
-  state.shifts.filter((s) => s.date === state.referenceToday)
+          // Determine auto-down from critical inspection failures.
+          let autoDown = false
+          let downReason = null
+          if (inspection) {
+            const failedCritical = Object.entries(inspection.results || {})
+              .filter(([k, v]) => v === 'fail' && s.criticalItems.includes(k))
+              .map(([k]) => k)
+            if (failedCritical.length > 0) {
+              autoDown = true
+              const labels = failedCritical
+                .map((k) => inspectionGroups.flatMap((g) => g.items).find((i) => i.key === k)?.label || k)
+                .join(', ')
+              downReason = `Auto-pulled: critical inspection failure (${labels})`
+            }
+          }
 
-export const selectTodayTrips = (state) =>
-  state.trips.filter((t) => t.date === state.referenceToday)
+          const vehicles = s.vehicles.map((v) => {
+            if (v.id !== shift.vehicleId) return v
+            const next = {
+              ...v,
+              odometer: shift.odoEnd ?? v.odometer,
+              lastInspection: inspection?.date ?? v.lastInspection,
+              inspectionResult: inspection?.overallResult ?? v.inspectionResult,
+            }
+            if (autoDown) {
+              next.status = 'out-of-service'
+              next.downReason = downReason
+              next.maintenanceNotes = `${downReason}. ${v.maintenanceNotes || ''}`.trim()
+            } else if (inspection?.overallResult === 'fail') {
+              next.status = 'flagged'
+            }
+            return next
+          })
 
-// Completed trips today (all 4 timestamps logged)
-export const selectTodayCompletedTrips = (state) =>
-  selectTodayTrips(state).filter((t) => t.status === 'complete')
+          const newIncidents = incidents.length
+            ? [
+                ...incidents.map((inc) => ({
+                  id: newId('INC'),
+                  status: 'open',
+                  managerNotes: '',
+                  createdAt: new Date().toISOString(),
+                  ...inc,
+                })),
+                ...s.incidents,
+              ]
+            : s.incidents
 
-export const selectTodayKpis = (state) => {
-  const todayTrips = selectTodayTrips(state)
+          return { shifts, inspections, vehicles, trips: flattenTrips(shifts), incidents: newIncidents, _autoDown: { autoDown, downReason, vehicleId: shift.vehicleId } }
+        }),
+
+      // ---- Settings / misc -------------------------------------------------
+      updateSettings: (partial) => set((s) => ({ settings: { ...s.settings, ...partial } })),
+      toggleNotification: (key) =>
+        set((s) => ({
+          settings: {
+            ...s.settings,
+            notifications: { ...s.settings.notifications, [key]: !s.settings.notifications[key] },
+          },
+        })),
+      toggleChecklistItem: (key) =>
+        set((s) => ({ checklist: s.checklist.map((c) => (c.key === key ? { ...c, active: !c.active } : c)) })),
+      markReportGenerated: (type) =>
+        set((s) => ({ reportTimestamps: { ...s.reportTimestamps, [type]: new Date().toISOString() } })),
+
+      // Wipe persisted data and re-seed from the mock files.
+      resetSystem: () => set({ ...seed() }),
+    }),
+    {
+      name: 'shuttlelog-manager',
+      version: 2,
+    },
+  ),
+)
+
+// ---- Location scoping helpers --------------------------------------------
+const inLoc = (locId) => (item) => !locId || item.locationId === locId
+
+export const scopeData = (state, locationId) => ({
+  drivers: state.drivers.filter(inLoc(locationId)),
+  vehicles: state.vehicles.filter(inLoc(locationId)),
+  shifts: state.shifts.filter(inLoc(locationId)),
+  trips: state.trips.filter(inLoc(locationId)),
+  inspections: state.inspections.filter((i) => {
+    if (!locationId) return true
+    const v = state.vehicles.find((x) => x.id === i.vehicleId)
+    return v ? v.locationId === locationId : true
+  }),
+  incidents: state.incidents.filter(inLoc(locationId)),
+})
+
+// ---- Aggregation selectors -----------------------------------------------
+export const selectTodayShiftsFor = (state, locationId) =>
+  state.shifts.filter((s) => s.date === state.referenceToday && inLoc(locationId)(s))
+
+export const selectTodayKpisFor = (state, locationId) => {
+  const { trips, vehicles, shifts, incidents } = scopeData(state, locationId)
+  const todayTrips = trips.filter((t) => t.date === state.referenceToday)
   const completed = todayTrips.filter((t) => t.status === 'complete')
-  const totalPax = todayTrips.reduce(
-    (sum, t) => sum + (t.paxToAirport || 0) + (t.paxFromAirport || 0),
-    0,
-  )
-  const activeShifts = selectTodayShifts(state).filter((s) => s.status === 'active')
+  const totalPax = todayTrips.reduce((sum, t) => sum + (t.paxToAirport || 0) + (t.paxFromAirport || 0), 0)
+  const activeShifts = shifts.filter((s) => s.date === state.referenceToday && s.status === 'active')
   const activeVehicleIds = new Set(activeShifts.map((s) => s.vehicleId))
-  const idleVehicles = state.vehicles.filter(
+  const idleVehicles = vehicles.filter(
     (v) => !activeVehicleIds.has(v.id) && v.status !== 'out-of-service',
   )
-  // Failed inspection items flagged today / unresolved
-  const failedInspections = state.inspections.filter(
-    (i) => i.overallResult === 'fail',
-  )
-  const flaggedVehicles = state.vehicles.filter((v) => v.status === 'flagged')
+  const flaggedVehicles = vehicles.filter((v) => v.status === 'flagged' || v.status === 'out-of-service')
+  const openIncidents = incidents.filter((i) => i.status !== 'resolved')
 
   return {
     totalTrips: completed.length,
@@ -136,7 +297,7 @@ export const selectTodayKpis = (state) => {
     activeVehicles: activeVehicleIds.size,
     idleVehicles: idleVehicles.length,
     flaggedItems: flaggedVehicles.length,
-    failedInspections: failedInspections.length,
+    openIncidents: openIncidents.length,
   }
 }
 

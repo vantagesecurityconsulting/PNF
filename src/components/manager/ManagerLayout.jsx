@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet, NavLink, Link } from 'react-router-dom'
+import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
   Table2,
@@ -12,23 +12,49 @@ import {
   PanelLeftClose,
   PanelLeft,
   Menu,
+  TriangleAlert,
+  Building2,
+  UserCog,
+  LogOut,
+  ChevronDown,
 } from 'lucide-react'
 import { Logo, ParkNFlyMark } from '../shared/Logo'
 import { useManagerStore } from '../../store/useManagerStore'
+import { useAuthStore } from '../../store/useAuthStore'
 
 const NAV = [
   { to: '/manager', label: 'Dashboard', icon: LayoutDashboard, end: true },
   { to: '/manager/trips', label: 'All Trips', icon: Table2 },
   { to: '/manager/fleet', label: 'Fleet', icon: Bus },
-  { to: '/manager/drivers', label: 'Drivers', icon: Users },
+  { to: '/manager/drivers', label: 'Staff', icon: Users },
+  { to: '/manager/incidents', label: 'Incidents', icon: TriangleAlert },
   { to: '/manager/reports', label: 'Reports', icon: FileText },
   { to: '/manager/settings', label: 'Settings', icon: SettingsIcon },
+]
+
+const OWNER_NAV = [
+  { to: '/manager/admin/locations', label: 'Locations', icon: Building2 },
+  { to: '/manager/admin/managers', label: 'Managers', icon: UserCog },
 ]
 
 export default function ManagerLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const settings = useManagerStore((s) => s.settings)
+  const navigate = useNavigate()
+
+  const locations = useManagerStore((s) => s.locations)
+  const currentUser = useAuthStore((s) => s.currentUser)
+  const activeLocationId = useAuthStore((s) => s.activeLocationId)
+  const setActiveLocation = useAuthStore((s) => s.setActiveLocation)
+  const logout = useAuthStore((s) => s.logout)
+
+  const isOwner = currentUser?.role === 'owner'
+  const activeLocation = locations.find((l) => l.id === activeLocationId)
+
+  const handleLogout = () => {
+    logout()
+    navigate('/manager/login')
+  }
 
   const sidebarWidth = collapsed ? 'lg:w-[76px]' : 'lg:w-64'
 
@@ -36,73 +62,89 @@ export default function ManagerLayout() {
     <div className="flex h-full flex-col">
       {/* Brand */}
       <div className="flex items-center justify-between px-4 py-5">
-        {showLabels ? (
-          <Logo size={34} />
-        ) : (
-          <div className="mx-auto">
-            <ParkNFlyMark size={34} />
-          </div>
-        )}
+        {showLabels ? <Logo size={34} /> : <div className="mx-auto"><ParkNFlyMark size={34} /></div>}
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 space-y-1 px-3">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         {NAV.map((item) => (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={() => setMobileOpen(false)}
-            className={({ isActive }) =>
-              `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
-                isActive ? 'bg-green-light text-green-dark' : 'text-graytext hover:bg-gray-100 hover:text-ink'
-              } ${showLabels ? '' : 'justify-center'}`
-            }
-            title={item.label}
-          >
-            <item.icon size={20} strokeWidth={2.2} />
-            {showLabels && item.label}
-          </NavLink>
+          <NavItem key={item.to} item={item} showLabels={showLabels} onNavigate={() => setMobileOpen(false)} />
         ))}
+
+        {isOwner && (
+          <>
+            <div className={`px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${showLabels ? '' : 'text-center'}`}>
+              {showLabels ? 'Owner Admin' : '•••'}
+            </div>
+            {OWNER_NAV.map((item) => (
+              <NavItem key={item.to} item={item} showLabels={showLabels} onNavigate={() => setMobileOpen(false)} />
+            ))}
+          </>
+        )}
       </nav>
 
-      {/* Bottom: location pill + driver view link */}
+      {/* Bottom */}
       <div className="space-y-2 border-t border-black/5 px-3 py-4">
-        <div
-          className={`flex items-center gap-2 rounded-xl bg-green-light px-3 py-2 text-xs font-bold text-green-dark ${
-            showLabels ? '' : 'justify-center'
-          }`}
-        >
-          <MapPin size={15} />
-          {showLabels && `${settings.locationName.split(',')[0]} · ${settings.locationCode}`}
-        </div>
+        {/* Location switcher / label */}
+        {isOwner && showLabels ? (
+          <div className="relative">
+            <select
+              value={activeLocationId || ''}
+              onChange={(e) => setActiveLocation(e.target.value)}
+              className="h-9 w-full appearance-none rounded-xl bg-green-light px-3 pr-8 text-xs font-bold text-green-dark outline-none"
+            >
+              {locations.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.city} · {l.code}
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-2.5 text-green-dark" />
+          </div>
+        ) : (
+          <div className={`flex items-center gap-2 rounded-xl bg-green-light px-3 py-2 text-xs font-bold text-green-dark ${showLabels ? '' : 'justify-center'}`}>
+            <MapPin size={15} />
+            {showLabels && (activeLocation ? `${activeLocation.city} · ${activeLocation.code}` : '—')}
+          </div>
+        )}
+
+        {/* Current user */}
+        {showLabels && currentUser && (
+          <div className="flex items-center gap-2 rounded-xl px-3 py-1.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-full bg-ink text-[11px] font-black text-white">
+              {currentUser.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+            </div>
+            <div className="min-w-0 flex-1 leading-tight">
+              <div className="truncate text-xs font-bold text-ink">{currentUser.name}</div>
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-graytext">{currentUser.role}</div>
+            </div>
+          </div>
+        )}
+
         <Link
           to="/driver"
-          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-gray-100 ${
-            showLabels ? '' : 'justify-center'
-          }`}
+          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-gray-100 ${showLabels ? '' : 'justify-center'}`}
           title="Switch to Driver View"
         >
           <Tablet size={15} />
           {showLabels && 'Switch to Driver View'}
         </Link>
-        {showLabels && (
-          <button
-            onClick={() => setCollapsed((c) => !c)}
-            className="hidden w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-gray-100 lg:flex"
-          >
-            <PanelLeftClose size={15} /> Collapse
-          </button>
-        )}
-        {!showLabels && (
-          <button
-            onClick={() => setCollapsed((c) => !c)}
-            className="hidden w-full items-center justify-center rounded-xl px-3 py-2 text-graytext hover:bg-gray-100 lg:flex"
-            title="Expand sidebar"
-          >
-            <PanelLeft size={18} />
-          </button>
-        )}
+
+        <button
+          onClick={handleLogout}
+          className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-danger hover:bg-danger/10 ${showLabels ? '' : 'justify-center'}`}
+          title="Sign out"
+        >
+          <LogOut size={15} />
+          {showLabels && 'Sign Out'}
+        </button>
+
+        <button
+          onClick={() => setCollapsed((c) => !c)}
+          className={`hidden w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-gray-100 lg:flex ${showLabels ? '' : 'justify-center'}`}
+        >
+          {showLabels ? <><PanelLeftClose size={15} /> Collapse</> : <PanelLeft size={18} />}
+        </button>
       </div>
     </div>
   )
@@ -110,9 +152,7 @@ export default function ManagerLayout() {
   return (
     <div className="flex min-h-screen bg-offwhite">
       {/* Desktop sidebar */}
-      <aside
-        className={`hidden shrink-0 border-r border-black/5 bg-white transition-all lg:block ${sidebarWidth}`}
-      >
+      <aside className={`hidden shrink-0 border-r border-black/5 bg-white transition-all lg:block ${sidebarWidth}`}>
         <div className="sticky top-0 h-screen">
           <SidebarInner showLabels={!collapsed} />
         </div>
@@ -130,7 +170,6 @@ export default function ManagerLayout() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        {/* Mobile top bar */}
         <header className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
@@ -148,5 +187,24 @@ export default function ManagerLayout() {
         </main>
       </div>
     </div>
+  )
+}
+
+function NavItem({ item, showLabels, onNavigate }) {
+  return (
+    <NavLink
+      to={item.to}
+      end={item.end}
+      onClick={onNavigate}
+      className={({ isActive }) =>
+        `flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
+          isActive ? 'bg-green-light text-green-dark' : 'text-graytext hover:bg-gray-100 hover:text-ink'
+        } ${showLabels ? '' : 'justify-center'}`
+      }
+      title={item.label}
+    >
+      <item.icon size={20} strokeWidth={2.2} />
+      {showLabels && item.label}
+    </NavLink>
   )
 }

@@ -11,6 +11,7 @@ import {
   Wrench,
   Send,
   TrendingUp,
+  TriangleAlert,
 } from 'lucide-react'
 import {
   LineChart,
@@ -22,7 +23,8 @@ import {
   Legend,
   ResponsiveContainer,
 } from 'recharts'
-import { useManagerStore, selectTodayKpis } from '../../store/useManagerStore'
+import { useManagerStore, selectTodayKpisFor } from '../../store/useManagerStore'
+import { useScope } from '../../hooks/useScope'
 import { useToastStore } from '../../store/useToastStore'
 import { KpiCard } from '../../components/shared/KpiCard'
 import { VehicleCard } from '../../components/shared/VehicleCard'
@@ -48,8 +50,8 @@ export default function Dashboard() {
   const flagVehicle = useManagerStore((s) => s.flagVehicle)
   const markReportGenerated = useManagerStore((s) => s.markReportGenerated)
 
-  const { shifts, vehicles, drivers, trips, referenceToday } = store
-  const kpis = selectTodayKpis(store)
+  const { drivers, vehicles, shifts, trips, inspections, activeLocationId, referenceToday } = useScope()
+  const kpis = selectTodayKpisFor(store, activeLocationId)
 
   const [flagOpen, setFlagOpen] = useState(false)
   const [flagVehicleId, setFlagVehicleId] = useState('')
@@ -84,7 +86,7 @@ export default function Dashboard() {
   )
 
   const generateTodayReport = () => {
-    const summary = rangeSummary(shifts, store.inspections, drivers, vehicles, referenceToday, referenceToday)
+    const summary = rangeSummary(shifts, inspections, drivers, vehicles, referenceToday, referenceToday)
     generateOperationsSummary({ rangeLabel: formatDate(referenceToday), ...summary })
     markReportGenerated('operations')
     addToast("Today's operations report generated", 'success')
@@ -115,16 +117,22 @@ export default function Dashboard() {
       />
 
       {/* KPI bar */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
         <KpiCard label="Trips Today" value={kpis.totalTrips} icon={Route} color="green" />
         <KpiCard label="Passengers" value={kpis.totalPax} icon={Users} color="info" />
         <KpiCard label="Active Vehicles" value={kpis.activeVehicles} icon={Bus} color="green" />
         <KpiCard label="Idle / In Lot" value={kpis.idleVehicles} icon={Pause} color="amber" />
         <KpiCard
-          label="Flagged Issues"
+          label="Flagged / Down"
           value={kpis.flaggedItems}
           icon={AlertTriangle}
           color={kpis.flaggedItems > 0 ? 'red' : 'gray'}
+        />
+        <KpiCard
+          label="Open Incidents"
+          value={kpis.openIncidents}
+          icon={TriangleAlert}
+          color={kpis.openIncidents > 0 ? 'red' : 'gray'}
         />
       </div>
 

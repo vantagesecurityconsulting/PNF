@@ -2,9 +2,9 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Fuel, PenLine, Save, CheckCircle2, AlertTriangle, ChevronDown } from 'lucide-react'
 import { useShiftStore } from '../../store/useShiftStore'
+import { useManagerStore } from '../../store/useManagerStore'
 import { useToastStore } from '../../store/useToastStore'
 import { inspectionGroups, fuelLevels } from '../../data/inspectionItems'
-import { getDriverById } from '../../data/mockDrivers'
 import { InspectionToggle } from '../../components/shared/InspectionToggle'
 import { ProgressBar } from '../../components/shared/ProgressBar'
 import { Card } from '../../components/shared/Card'
@@ -28,8 +28,19 @@ export default function Inspection() {
 
   const [error, setError] = useState('')
 
-  const driver = getDriverById(driverId)
-  const allItems = useMemo(() => inspectionGroups.flatMap((g) => g.items), [])
+  const drivers = useManagerStore((s) => s.drivers)
+  const checklist = useManagerStore((s) => s.checklist)
+  const driver = drivers.find((d) => d.id === driverId)
+
+  // Only show items that are active in the manager's checklist config.
+  const groups = useMemo(() => {
+    const isActive = (key) => checklist.find((c) => c.key === key)?.active ?? true
+    return inspectionGroups
+      .map((g) => ({ ...g, items: g.items.filter((i) => isActive(i.key)) }))
+      .filter((g) => g.items.length > 0)
+  }, [checklist])
+
+  const allItems = useMemo(() => groups.flatMap((g) => g.items), [groups])
   const checkedCount = allItems.filter((i) => results[i.key] != null).length
   const failedItems = allItems.filter((i) => results[i.key] === 'fail')
 
@@ -98,7 +109,7 @@ export default function Inspection() {
       </Card>
 
       {/* Groups */}
-      {inspectionGroups.map((group) => {
+      {groups.map((group) => {
         const groupChecked = group.items.filter((i) => results[i.key] != null).length
         return (
           <Card key={group.key} padded className="space-y-2.5">

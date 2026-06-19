@@ -13,6 +13,7 @@
 export const mockVehicles = [
   {
     id: 'V001',
+    locationId: 'LOC-HFX',
     busNum: 'Bus 1',
     make: 'StarTrans',
     model: 'Senator II',
@@ -27,6 +28,7 @@ export const mockVehicles = [
   },
   {
     id: 'V002',
+    locationId: 'LOC-HFX',
     busNum: 'Bus 2',
     make: 'StarTrans',
     model: 'Senator II',
@@ -41,6 +43,7 @@ export const mockVehicles = [
   },
   {
     id: 'V003',
+    locationId: 'LOC-HFX',
     busNum: 'Bus 3',
     make: 'Ford',
     model: 'Transit 350',
@@ -55,6 +58,7 @@ export const mockVehicles = [
   },
   {
     id: 'V004',
+    locationId: 'LOC-HFX',
     busNum: 'Bus 4',
     make: 'Ford',
     model: 'Transit 350',

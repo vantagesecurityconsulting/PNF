@@ -188,7 +188,7 @@ export function generateShiftReport({ shift, inspection, driver, vehicle }) {
       ['Odometer Start', shift?.odoStart != null ? `${shift.odoStart.toLocaleString()} km` : '—'],
       ['Odometer End', shift?.odoEnd != null ? `${shift.odoEnd.toLocaleString()} km` : '—'],
       ['Total Distance', km != null ? `${km.toLocaleString()} km` : '—'],
-      ['Employee ID', driver?.employeeId || '—'],
+      ['Fuel Added', shift?.fuelLitres != null ? `${shift.fuelLitres} L` : '—'],
     ],
     'SHIFT SUMMARY',
   )
@@ -474,6 +474,83 @@ export function generateOperationsSummary({ rangeLabel, kpis, byDriver, byVehicl
 
   drawFooters(doc)
   doc.save(`OperationsSummary_${rangeLabel.replace(/[^\dA-Za-z]+/g, '_')}.pdf`)
+}
+
+// ===========================================================================
+// 4. INCIDENT REPORT
+// ===========================================================================
+export function generateIncidentReport({ incident, driverName, vehicleName }) {
+  const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+  let y = drawHeader(doc, 'INCIDENT REPORT')
+
+  // Severity banner
+  const sevColor = incident.severity === 'Critical' || incident.severity === 'High' ? RED
+    : incident.severity === 'Medium' ? [245, 166, 35] : GRAY
+  doc.setFillColor(...sevColor)
+  doc.roundedRect(PAGE.margin, y, PAGE.w - PAGE.margin * 2, 10, 2, 2, 'F')
+  doc.setTextColor(...WHITE)
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(10)
+  doc.text(`${incident.type}  ·  ${incident.severity} severity  ·  ${(incident.status || 'open').toUpperCase()}`, PAGE.w / 2, y + 6.5, { align: 'center' })
+  y += 16
+
+  y = drawInfoBlock(
+    doc,
+    y,
+    [
+      ['Reported By', incident.reportedBy || driverName || '—'],
+      ['Vehicle', vehicleName || '—'],
+      ['Date', formatDate(incident.date)],
+      ['Time', formatTime(incident.time)],
+      ['Incident ID', incident.id || '—'],
+      ['Status', (incident.status || 'open').toUpperCase()],
+    ],
+    'INCIDENT DETAILS',
+  )
+
+  // Description
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...BLACK)
+  doc.text('DESCRIPTION', PAGE.margin, y)
+  y += 6
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(9.5)
+  doc.setTextColor(...BLACK)
+  const descLines = doc.splitTextToSize(incident.description || '—', PAGE.w - PAGE.margin * 2)
+  doc.text(descLines, PAGE.margin, y)
+  y += descLines.length * 5 + 8
+
+  // Manager notes
+  if (incident.managerNotes) {
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(11)
+    doc.setTextColor(...BLACK)
+    doc.text('MANAGER NOTES', PAGE.margin, y)
+    y += 6
+    doc.setFont('helvetica', 'normal')
+    doc.setFontSize(9.5)
+    doc.setTextColor(...GRAY)
+    const mLines = doc.splitTextToSize(incident.managerNotes, PAGE.w - PAGE.margin * 2)
+    doc.text(mLines, PAGE.margin, y)
+    y += mLines.length * 5 + 8
+  }
+
+  // Signature lines
+  y = Math.max(y, PAGE.h - 50)
+  const colW = (PAGE.w - PAGE.margin * 2 - 10) / 2
+  doc.setDrawColor(...BLACK)
+  doc.setLineWidth(0.3)
+  doc.line(PAGE.margin, y, PAGE.margin + colW, y)
+  doc.line(PAGE.margin + colW + 10, y, PAGE.w - PAGE.margin, y)
+  doc.setFont('helvetica', 'normal')
+  doc.setFontSize(8)
+  doc.setTextColor(...GRAY)
+  doc.text('Driver Signature', PAGE.margin, y + 5)
+  doc.text('Supervisor Signature', PAGE.margin + colW + 10, y + 5)
+
+  drawFooters(doc)
+  doc.save(`Incident_${incident.id || 'report'}_${incident.date || ''}.pdf`)
 }
 
 export { fuelLevels }

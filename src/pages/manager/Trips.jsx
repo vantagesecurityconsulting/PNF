@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Table2, FileDown, Filter, X } from 'lucide-react'
-import { useManagerStore } from '../../store/useManagerStore'
+import { useScope } from '../../hooks/useScope'
 import { useToastStore } from '../../store/useToastStore'
 import { SectionHeader } from '../../components/shared/SectionHeader'
 import { DataTable } from '../../components/shared/DataTable'
@@ -10,16 +10,16 @@ import { SlideOver } from '../../components/shared/SlideOver'
 import { LoadingState } from '../../components/shared/Spinner'
 import { useFakeLoad } from '../../hooks/useFakeLoad'
 import { formatTime, formatDateShort, formatMinutes, minutesBetween, formatDate } from '../../utils/formatters'
-import { getDriverName } from '../../data/mockDrivers'
-import { getVehicleLabel } from '../../data/mockVehicles'
 import { generateOperationsSummary } from '../../utils/pdfGenerator'
 import { rangeSummary } from '../../utils/analytics'
 
 export default function Trips() {
   const loading = useFakeLoad(800)
-  const store = useManagerStore()
-  const { trips, drivers, vehicles, inspections, referenceToday } = store
+  const { trips, drivers, vehicles, inspections, shifts, referenceToday } = useScope()
   const addToast = useToastStore((s) => s.addToast)
+
+  const getDriverName = (id) => drivers.find((d) => d.id === id)?.name || 'Unknown Driver'
+  const getVehicleLabel = (id) => vehicles.find((v) => v.id === id)?.busNum || 'Unknown Vehicle'
 
   const [driverFilter, setDriverFilter] = useState('')
   const [vehicleFilter, setVehicleFilter] = useState('')
@@ -54,7 +54,7 @@ export default function Trips() {
     const dates = filtered.map((t) => t.date).sort()
     const start = startDate || dates[0] || referenceToday
     const end = endDate || dates[dates.length - 1] || referenceToday
-    const summary = rangeSummary(store.shifts, inspections, drivers, vehicles, start, end)
+    const summary = rangeSummary(shifts, inspections, drivers, vehicles, start, end)
     generateOperationsSummary({
       rangeLabel: `${formatDate(start)} – ${formatDate(end)}`,
       ...summary,

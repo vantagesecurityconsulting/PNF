@@ -1,22 +1,23 @@
 import { useState } from 'react'
 import { FileText, FileDown, ClipboardCheck, BarChart3, Calendar, CheckCircle2, Clock } from 'lucide-react'
 import { useManagerStore } from '../../store/useManagerStore'
+import { useScope } from '../../hooks/useScope'
 import { useToastStore } from '../../store/useToastStore'
 import { SectionHeader } from '../../components/shared/SectionHeader'
 import { Card } from '../../components/shared/Card'
 import { Button } from '../../components/shared/Button'
 import { formatDate, formatDateTime, timeAgo } from '../../utils/formatters'
-import { getDriverById } from '../../data/mockDrivers'
-import { getVehicleById } from '../../data/mockVehicles'
-import { getInspectionByShift, getInspectionsByVehicle } from '../../data/mockInspections'
 import { generateShiftReport, generateInspectionReport, generateOperationsSummary } from '../../utils/pdfGenerator'
 import { rangeSummary } from '../../utils/analytics'
 
 export default function Reports() {
-  const store = useManagerStore()
-  const { shifts, drivers, vehicles, inspections, referenceToday, reportTimestamps } = store
+  const { shifts, drivers, vehicles, inspections, referenceToday } = useScope()
+  const reportTimestamps = useManagerStore((s) => s.reportTimestamps)
   const markReportGenerated = useManagerStore((s) => s.markReportGenerated)
   const addToast = useToastStore((s) => s.addToast)
+
+  const findDriver = (id) => drivers.find((d) => d.id === id)
+  const findVehicle = (id) => vehicles.find((v) => v.id === id)
 
   const weekAgo = (() => {
     const d = new Date(`${referenceToday}T12:00:00`)
@@ -45,18 +46,18 @@ export default function Reports() {
     }
     generateShiftReport({
       shift,
-      inspection: getInspectionByShift(shift.id),
-      driver: getDriverById(shift.driverId),
-      vehicle: getVehicleById(shift.vehicleId),
+      inspection: inspections.find((i) => i.shiftId === shift.id),
+      driver: findDriver(shift.driverId),
+      vehicle: findVehicle(shift.vehicleId),
     })
     markReportGenerated('daily')
     addToast('Daily shift report generated', 'success')
   }
 
   const generateInspection = () => {
-    const list = getInspectionsByVehicle(inspVehicle).filter(
-      (i) => i.date >= inspStart && i.date <= inspEnd,
-    )
+    const list = inspections
+      .filter((i) => i.vehicleId === inspVehicle && i.date >= inspStart && i.date <= inspEnd)
+      .sort((a, b) => (a.date < b.date ? 1 : -1))
     if (list.length === 0) {
       addToast('No inspections in that range for this vehicle', 'warning')
       return
@@ -64,8 +65,8 @@ export default function Reports() {
     const latest = list[0]
     generateInspectionReport({
       inspection: latest,
-      driver: getDriverById(latest.driverId),
-      vehicle: getVehicleById(latest.vehicleId),
+      driver: findDriver(latest.driverId),
+      vehicle: findVehicle(latest.vehicleId),
       shift: shifts.find((s) => s.id === latest.shiftId),
     })
     markReportGenerated('inspection')

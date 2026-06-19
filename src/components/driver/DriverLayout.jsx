@@ -1,17 +1,17 @@
 import { Outlet, NavLink, useLocation } from 'react-router-dom'
-import { Bus, ClipboardList, Search, FileText, MonitorCog } from 'lucide-react'
+import { Bus, ClipboardList, Search, FileText, MonitorCog, TriangleAlert } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { ParkNFlyMark } from '../shared/Logo'
 import { DriverAvatar } from '../shared/DriverAvatar'
 import { useShiftStore } from '../../store/useShiftStore'
-import { getDriverById } from '../../data/mockDrivers'
-import { getVehicleById as getVehicle } from '../../data/mockVehicles'
+import { useManagerStore } from '../../store/useManagerStore'
 import { formatDate } from '../../utils/formatters'
 
 const TABS = [
   { to: '/driver/log', label: 'Trip Log', icon: Bus },
   { to: '/driver/trips', label: 'My Trips', icon: ClipboardList },
   { to: '/driver/inspection', label: 'Inspection', icon: Search },
+  { to: '/driver/incident', label: 'Incident', icon: TriangleAlert },
   { to: '/driver/end-shift', label: 'End Shift', icon: FileText },
 ]
 
@@ -22,8 +22,10 @@ export default function DriverLayout() {
   const vehicleId = useShiftStore((s) => s.vehicleId)
   const shiftDate = useShiftStore((s) => s.shiftDate)
 
-  const driver = getDriverById(driverId)
-  const vehicle = getVehicle(vehicleId)
+  const drivers = useManagerStore((s) => s.drivers)
+  const vehicles = useManagerStore((s) => s.vehicles)
+  const driver = drivers.find((d) => d.id === driverId)
+  const vehicle = vehicles.find((v) => v.id === vehicleId)
   const onStartScreen = location.pathname === '/driver'
 
   return (

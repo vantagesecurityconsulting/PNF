@@ -119,11 +119,13 @@ function buildShift({ shiftId, driverId, vehicleId, dateStr, odoStart, inProgres
     id: shiftId,
     driverId,
     vehicleId,
+    locationId: 'LOC-HFX', // seed data is the Halifax lot
     date: dateStr,
     startTime: isoAt(dateStr, startMin),
     endTime,
     odoStart,
     odoEnd,
+    fuelLitres: inProgress ? null : randInt(28, 55),
     status: inProgress ? 'active' : 'complete',
     trips,
   }
@@ -214,15 +216,19 @@ export const getShiftsByDate = (dateStr) => mockShifts.filter((s) => s.date === 
 export const getTodayShifts = () => getShiftsByDate(TODAY)
 
 // Flattened list of every trip across all shifts (with shift context).
-export const allTrips = mockShifts.flatMap((shift) =>
-  shift.trips.map((trip) => ({
-    ...trip,
-    date: shift.date,
-    driverId: shift.driverId,
-    vehicleId: shift.vehicleId,
-    shiftId: shift.id,
-  })),
-)
+export const flattenTrips = (shifts) =>
+  shifts.flatMap((shift) =>
+    shift.trips.map((trip) => ({
+      ...trip,
+      date: shift.date,
+      driverId: shift.driverId,
+      vehicleId: shift.vehicleId,
+      locationId: shift.locationId,
+      shiftId: shift.id,
+    })),
+  )
+
+export const allTrips = flattenTrips(mockShifts)
 
 export const REFERENCE_TODAY = TODAY
 

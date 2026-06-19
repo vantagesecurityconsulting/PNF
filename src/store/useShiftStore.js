@@ -36,10 +36,15 @@ const initialState = {
   shiftStarted: false,
   driverId: '',
   vehicleId: '',
+  locationId: '',
   shiftDate: '',
   odoStart: '',
   odoEnd: '',
+  fuelLitres: '',
   startedAt: null,
+
+  // Incidents filed during this shift
+  incidents: [],
 
   // Inspection
   inspectionComplete: false,
@@ -60,19 +65,32 @@ export const useShiftStore = create(
     (set, get) => ({
       ...initialState,
 
-      startShift: ({ driverId, vehicleId, shiftDate, odoStart }) =>
+      startShift: ({ driverId, vehicleId, locationId, shiftDate, odoStart }) =>
         set({
           shiftStarted: true,
           driverId,
           vehicleId,
+          locationId,
           shiftDate,
           odoStart,
+          fuelLitres: '',
+          incidents: [],
           startedAt: new Date().toISOString(),
           currentStep: 1,
           currentTripNum: 1,
           currentTrip: emptyTrip(),
           trips: [],
         }),
+
+      setFuelLitres: (fuelLitres) => set({ fuelLitres }),
+
+      // Incident reports filed by the driver during the shift.
+      addShiftIncident: (incident) =>
+        set((s) => ({
+          incidents: [...s.incidents, { id: `local-INC-${Date.now()}`, ...incident }],
+        })),
+      removeShiftIncident: (id) =>
+        set((s) => ({ incidents: s.incidents.filter((i) => i.id !== id) })),
 
       // Passenger counters
       setPaxToAirport: (value) =>
