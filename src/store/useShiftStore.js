@@ -52,6 +52,7 @@ const initialState = {
   fuelLevel: '',
   inspectionNotes: '',
   inspectionSignature: '',
+  inspectionPhotos: [],
 
   // Trips
   currentStep: 1, // 1–4, the next action to perform
@@ -143,6 +144,7 @@ export const useShiftStore = create(
       setFuelLevel: (fuelLevel) => set({ fuelLevel }),
       setInspectionNotes: (inspectionNotes) => set({ inspectionNotes }),
       setInspectionSignature: (inspectionSignature) => set({ inspectionSignature }),
+      setInspectionPhotos: (inspectionPhotos) => set({ inspectionPhotos }),
       saveInspection: () => set({ inspectionComplete: true }),
 
       setOdoEnd: (odoEnd) => set({ odoEnd }),

@@ -145,6 +145,21 @@ export default function Incidents() {
               <p className="rounded-xl bg-white p-4 text-sm leading-relaxed text-ink shadow-card">{selected.description}</p>
             </div>
 
+            {selected.photos?.length > 0 && (
+              <div>
+                <h3 className="mb-1.5 text-sm font-extrabold uppercase tracking-wide text-graytext">
+                  Photos ({selected.photos.length})
+                </h3>
+                <div className="flex flex-wrap gap-2">
+                  {selected.photos.map((src, i) => (
+                    <a key={i} href={src} target="_blank" rel="noreferrer" className="block h-24 w-24 overflow-hidden rounded-xl border border-black/10">
+                      <img src={src} alt={`incident photo ${i + 1}`} className="h-full w-full object-cover transition-transform hover:scale-105" />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div>
               <h3 className="mb-1.5 text-sm font-extrabold uppercase tracking-wide text-graytext">Manager Notes</h3>
               <textarea

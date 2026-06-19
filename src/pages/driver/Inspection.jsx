@@ -9,6 +9,7 @@ import { InspectionToggle } from '../../components/shared/InspectionToggle'
 import { ProgressBar } from '../../components/shared/ProgressBar'
 import { Card } from '../../components/shared/Card'
 import { Button } from '../../components/shared/Button'
+import { PhotoUploader } from '../../components/shared/PhotoUploader'
 
 export default function Inspection() {
   const navigate = useNavigate()
@@ -23,6 +24,8 @@ export default function Inspection() {
   const setFuelLevel = useShiftStore((s) => s.setFuelLevel)
   const setNotes = useShiftStore((s) => s.setInspectionNotes)
   const setSignature = useShiftStore((s) => s.setInspectionSignature)
+  const photos = useShiftStore((s) => s.inspectionPhotos)
+  const setPhotos = useShiftStore((s) => s.setInspectionPhotos)
   const saveInspection = useShiftStore((s) => s.saveInspection)
   const addToast = useToastStore((s) => s.addToast)
 
@@ -166,6 +169,11 @@ export default function Inspection() {
             placeholder="Note any defects, observations, or items needing follow-up…"
             className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
           />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-ink">Defect / Condition Photos (optional)</label>
+          <PhotoUploader value={photos} onChange={setPhotos} max={6} label="Add Photo" />
         </div>
 
         <div>

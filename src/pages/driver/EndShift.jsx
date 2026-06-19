@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Gauge, FileDown, ClipboardCheck, LogOut, Route, Users, Clock, AlertTriangle, Fuel } from 'lucide-react'
+import { Gauge, FileDown, ClipboardCheck, LogOut, Route, Users, Clock, AlertTriangle, Fuel, CheckCircle2 } from 'lucide-react'
 import { useShiftStore, selectTripTotals } from '../../store/useShiftStore'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useToastStore } from '../../store/useToastStore'
@@ -23,7 +23,7 @@ export default function EndShift() {
 
   const {
     shiftStarted, driverId, vehicleId, locationId, shiftDate, odoStart, odoEnd, fuelLitres,
-    startedAt, trips, incidents, inspectionResults, fuelLevel, inspectionNotes,
+    startedAt, trips, incidents, inspectionResults, inspectionPhotos, fuelLevel, inspectionNotes,
     inspectionSignature, inspectionComplete, setOdoEnd, setFuelLitres, endShift,
   } = store
 
@@ -41,6 +41,11 @@ export default function EndShift() {
   const shiftDuration = minutesBetween(startedAt, new Date().toISOString())
   const failedItems = allInspectionItems.filter((i) => inspectionResults[i.key] === 'fail')
 
+  // Inspection completeness drives the driver's compliance score.
+  const anyChecked = Object.values(inspectionResults).some((v) => v != null)
+  const inspectionStatus = inspectionComplete ? 'complete' : anyChecked ? 'incomplete' : 'missing'
+  const hasInspection = inspectionStatus !== 'missing'
+
   const buildShiftObj = () => ({
     id: `S-${Date.now()}`,
     driverId,
@@ -53,6 +58,8 @@ export default function EndShift() {
     odoEnd: totalKm != null ? odoEndNum : null,
     fuelLitres: fuelLitres !== '' && !isNaN(Number(fuelLitres)) ? Number(fuelLitres) : null,
     status: 'complete',
+    inspectionStatus,
+    inspectionComplete,
     trips: trips.map((t) => ({ ...t })),
   })
 
@@ -68,13 +75,15 @@ export default function EndShift() {
     fuelLevel,
     notes: inspectionNotes,
     signature: inspectionSignature,
-    overallResult: failedItems.length > 0 ? 'fail' : 'pass',
+    photos: inspectionPhotos || [],
+    complete: inspectionComplete,
+    overallResult: inspectionComplete ? (failedItems.length > 0 ? 'fail' : 'pass') : 'incomplete',
   })
 
   const downloadFull = () => {
     generateShiftReport({
       shift: buildShiftObj(),
-      inspection: inspectionComplete ? buildInspectionObj() : null,
+      inspection: hasInspection ? buildInspectionObj() : null,
       driver,
       vehicle,
     })
@@ -100,7 +109,7 @@ export default function EndShift() {
 
   const confirmEnd = () => {
     const shiftObj = buildShiftObj()
-    const inspObj = inspectionComplete ? { ...buildInspectionObj(), shiftId: shiftObj.id } : null
+    const inspObj = hasInspection ? { ...buildInspectionObj(), shiftId: shiftObj.id } : null
 
     // Auto-download the full shift report.
     generateShiftReport({ shift: shiftObj, inspection: inspObj, driver, vehicle })
@@ -112,8 +121,13 @@ export default function EndShift() {
     endShift()
     if (auto?.autoDown) {
       addToast(`${vehicle?.busNum} auto-pulled from service: critical inspection failure.`, 'warning')
+    } else if (inspectionStatus !== 'complete') {
+      addToast(
+        `Shift ended. Inspection was ${inspectionStatus} — this affects your compliance score.`,
+        'warning',
+      )
     } else {
-      addToast('Shift ended & report downloaded. Thanks for your work today!', 'success')
+      addToast('Shift ended & report downloaded. Compliance recorded ✓', 'success')
     }
     navigate('/driver')
   }
@@ -183,10 +197,25 @@ export default function EndShift() {
         )}
       </Card>
 
-      {!inspectionComplete && (
-        <Card padded className="flex items-center gap-3 border-amber/30 bg-amber/10 py-3">
-          <AlertTriangle size={18} className="text-amber" />
-          <span className="text-sm font-semibold text-amber">No inspection on file for this shift — the full report will omit it.</span>
+      {/* Inspection compliance notice */}
+      {inspectionStatus === 'complete' ? (
+        <Card padded className="flex items-center gap-3 border-green/30 bg-green-light py-3">
+          <CheckCircle2 size={18} className="text-green" />
+          <span className="text-sm font-semibold text-green-dark">
+            Pre-trip inspection complete — positive for your compliance score.
+          </span>
+        </Card>
+      ) : (
+        <Card padded className="flex items-start gap-3 border-amber/30 bg-amber/10 py-3">
+          <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber" />
+          <div className="text-sm font-semibold text-amber">
+            Inspection {inspectionStatus === 'missing' ? 'not started' : 'incomplete'} — ending now will
+            lower your compliance score.{' '}
+            <button onClick={() => navigate('/driver/inspection')} className="underline">
+              Complete it first
+            </button>
+            .
+          </div>
         </Card>
       )}
 

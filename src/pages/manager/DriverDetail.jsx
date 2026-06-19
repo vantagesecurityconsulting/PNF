@@ -1,12 +1,14 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { ArrowLeft, Route, Users, ShieldCheck, CalendarClock, Bus, Save, StickyNote } from 'lucide-react'
+import { ArrowLeft, Route, Users, ShieldCheck, CalendarClock, Bus, Save, StickyNote, Camera } from 'lucide-react'
+import { readImageResized } from '../../utils/image'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useToastStore } from '../../store/useToastStore'
 import { Card } from '../../components/shared/Card'
 import { Badge } from '../../components/shared/Badge'
 import { KpiCard } from '../../components/shared/KpiCard'
+import { ProgressBar } from '../../components/shared/ProgressBar'
 import { DriverAvatar } from '../../components/shared/DriverAvatar'
 import { DataTable } from '../../components/shared/DataTable'
 import { Button } from '../../components/shared/Button'
@@ -23,11 +25,26 @@ export default function DriverDetail() {
   const store = useManagerStore()
   const { shifts, inspections, referenceToday } = store
   const updateDriverNotes = useManagerStore((s) => s.updateDriverNotes)
+  const updateStaff = useManagerStore((s) => s.updateStaff)
   const addToast = useToastStore((s) => s.addToast)
+  const photoInput = useRef(null)
 
   const driver = store.drivers.find((d) => d.id === driverId)
   const [notes, setNotes] = useState('')
   useEffect(() => { setNotes(driver?.notes || '') }, [driver?.id, driver?.notes])
+
+  const onPhotoPick = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    try {
+      const url = await readImageResized(file, 600, 0.8)
+      updateStaff(driver.id, { photo: url })
+      addToast('Photo updated', 'success')
+    } catch {
+      addToast('Could not read that image', 'error')
+    }
+    if (photoInput.current) photoInput.current.value = ''
+  }
   const stats = useMemo(
     () => driverStats(driverId, shifts, inspections, referenceToday),
     [driverId, shifts, inspections, referenceToday],
@@ -77,6 +94,20 @@ export default function DriverDetail() {
       render: (s) => formatMinutes(minutesBetween(s.startTime, s.endTime)),
     },
     {
+      key: 'inspection',
+      header: 'Inspection',
+      render: (s) => {
+        if (s.status === 'active') return <span className="text-graytext">—</span>
+        const st = s.inspectionStatus || 'complete'
+        const meta = st === 'complete'
+          ? { color: 'green', label: 'Complete' }
+          : st === 'incomplete'
+            ? { color: 'amber', label: 'Incomplete' }
+            : { color: 'red', label: 'Missing' }
+        return <Badge color={meta.color} dot>{meta.label}</Badge>
+      },
+    },
+    {
       key: 'status',
       header: 'Status',
       render: (s) => (
@@ -96,7 +127,18 @@ export default function DriverDetail() {
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-4">
-          <DriverAvatar driver={driver} size="xl" />
+          <div className="relative">
+            <DriverAvatar driver={driver} size="xl" />
+            <button
+              onClick={() => photoInput.current?.click()}
+              className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full border-2 border-white bg-green text-white shadow hover:bg-green-dark"
+              title="Change photo"
+              aria-label="Change photo"
+            >
+              <Camera size={13} />
+            </button>
+            <input ref={photoInput} type="file" accept="image/*" onChange={onPhotoPick} className="hidden" />
+          </div>
           <div>
             <h1 className="text-2xl font-black tracking-tight text-ink">{driver.name}</h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-graytext">
@@ -155,6 +197,34 @@ export default function DriverDetail() {
             <Bar dataKey="trips" name="Trips" fill="#3fae29" radius={[4, 4, 0, 0]} maxBarSize={22} />
           </BarChart>
         </ResponsiveContainer>
+      </Card>
+
+      {/* Inspection compliance breakdown */}
+      <Card padded>
+        <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <ShieldCheck size={18} className="text-green" /> Inspection Compliance
+        </h2>
+        <div className="mt-3 flex items-center gap-5">
+          <div className="tabular text-4xl font-black text-ink">{stats.complianceRate}%</div>
+          <div className="flex-1">
+            <ProgressBar
+              value={stats.compliantShifts}
+              max={stats.endedShifts || 1}
+              showPct={false}
+              color={stats.complianceRate >= 90 ? 'green' : stats.complianceRate >= 70 ? 'amber' : 'red'}
+            />
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-graytext">
+              <span>{stats.compliantShifts} of {stats.endedShifts} shifts fully inspected</span>
+              {stats.missedInspections > 0 && (
+                <span className="text-danger">{stats.missedInspections} incomplete / missed</span>
+              )}
+            </div>
+          </div>
+        </div>
+        <p className="mt-3 text-xs text-graytext">
+          Compliance counts a completed shift only when the pre-trip inspection was fully filled out and
+          signed. Skipped or partial inspections lower the score.
+        </p>
       </Card>
 
       {/* Shift history */}

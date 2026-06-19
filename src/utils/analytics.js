@@ -96,8 +96,16 @@ export function driverStats(driverId, shifts, inspections, referenceToday) {
   const todayPax = todayTrips.reduce((sum, t) => sum + (t.paxToAirport || 0) + (t.paxFromAirport || 0), 0)
 
   const myInspections = inspections.filter((i) => i.driverId === driverId)
-  const passed = myInspections.filter((i) => i.overallResult === 'pass').length
-  const complianceRate = myInspections.length ? Math.round((passed / myInspections.length) * 100) : 100
+
+  // Inspection compliance: of the driver's COMPLETED shifts, what fraction had
+  // a fully completed (all items + signature) pre-trip inspection. Skipped or
+  // partial inspections drag the score down; complete ones lift it.
+  const endedShifts = myShifts.filter((s) => s.status === 'complete')
+  const compliantShifts = endedShifts.filter((s) => s.inspectionStatus === 'complete')
+  const complianceRate = endedShifts.length
+    ? Math.round((compliantShifts.length / endedShifts.length) * 100)
+    : 100
+  const missedInspections = endedShifts.length - compliantShifts.length
 
   return {
     shiftCount: myShifts.length,
@@ -107,6 +115,9 @@ export function driverStats(driverId, shifts, inspections, referenceToday) {
     todayPax,
     avgTripsPerShift: myShifts.length ? Math.round((completed.length / myShifts.length) * 10) / 10 : 0,
     complianceRate,
+    endedShifts: endedShifts.length,
+    compliantShifts: compliantShifts.length,
+    missedInspections,
     onShiftToday: today.some((s) => s.status === 'active'),
     shifts: [...myShifts].sort((a, b) => (a.date < b.date ? 1 : -1)),
     inspections: myInspections,

@@ -83,8 +83,10 @@ function buildInspection(shift, index) {
     results,
     fuelLevel,
     notes,
-    signature: '', // filled at sign time; driver app writes the typed name
+    signature: 'On file', // seed inspections were signed
     overallResult,
+    complete: true,
+    photos: [],
   }
 }
 

@@ -9,6 +9,18 @@ const SIZES = {
 export function DriverAvatar({ driver, size = 'md', className = '' }) {
   const initials = driver?.initials || '?'
   const onLeave = driver?.status === 'on-leave'
+
+  if (driver?.photo) {
+    return (
+      <img
+        src={driver.photo}
+        alt={driver.name}
+        title={driver?.name}
+        className={`shrink-0 rounded-full object-cover ${SIZES[size]} ${className}`}
+      />
+    )
+  }
+
   return (
     <div
       className={`flex shrink-0 items-center justify-center rounded-full font-extrabold tracking-tight

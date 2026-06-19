@@ -189,16 +189,20 @@ export default function Fleet() {
               <div className="space-y-2">
                 {stats.inspections.slice(0, 10).map((insp) => {
                   const failed = getFailedItems(insp)
+                  const result = insp.overallResult
+                  const badge = result === 'pass'
+                    ? { color: 'green', label: 'Pass' }
+                    : result === 'incomplete' || insp.complete === false
+                      ? { color: 'amber', label: 'Incomplete' }
+                      : { color: 'red', label: 'Fail' }
                   return (
                     <Card key={insp.id} padded>
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-bold text-ink">{formatDate(insp.date)}</span>
-                        <Badge color={insp.overallResult === 'pass' ? 'green' : 'red'} dot>
-                          {insp.overallResult === 'pass' ? 'Pass' : 'Fail'}
-                        </Badge>
+                        <Badge color={badge.color} dot>{badge.label}</Badge>
                       </div>
                       <div className="mt-1 text-xs text-graytext">
-                        {driverName(insp.driverId)} · Fuel: {insp.fuelLevel}
+                        {driverName(insp.driverId)} · Fuel: {insp.fuelLevel || '—'}
                       </div>
                       {failed.length > 0 && (
                         <div className="mt-2 rounded-lg bg-danger/10 px-3 py-2">
@@ -208,6 +212,15 @@ export default function Fleet() {
                               <li key={k} className="text-xs font-semibold text-danger">• {getItemLabel(k)}</li>
                             ))}
                           </ul>
+                        </div>
+                      )}
+                      {insp.photos?.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1.5">
+                          {insp.photos.map((src, i) => (
+                            <a key={i} href={src} target="_blank" rel="noreferrer" className="block h-14 w-14 overflow-hidden rounded-lg border border-black/10">
+                              <img src={src} alt={`inspection photo ${i + 1}`} className="h-full w-full object-cover" />
+                            </a>
+                          ))}
                         </div>
                       )}
                     </Card>

@@ -408,6 +408,9 @@ export function generateInspectionReport({ inspection, driver, vehicle, shift })
   })
 
   let ny = doc.lastAutoTable.finalY + 8
+  if (inspection?.photos?.length) {
+    ny = drawPhotos(doc, ny, inspection.photos, 'INSPECTION PHOTOS', 'VEHICLE INSPECTION REPORT')
+  }
   drawNotesAndSignatures(doc, ny, inspection, true)
 
   drawFooters(doc)
@@ -536,8 +539,18 @@ export function generateIncidentReport({ incident, driverName, vehicleName }) {
     y += mLines.length * 5 + 8
   }
 
+  // Photos
+  if (incident.photos?.length) {
+    y = drawPhotos(doc, y, incident.photos, 'PHOTOS', 'INCIDENT REPORT')
+  }
+
   // Signature lines
-  y = Math.max(y, PAGE.h - 50)
+  if (y > PAGE.h - 40) {
+    doc.addPage()
+    y = drawHeader(doc, 'INCIDENT REPORT')
+  } else {
+    y = Math.max(y, PAGE.h - 50)
+  }
   const colW = (PAGE.w - PAGE.margin * 2 - 10) / 2
   doc.setDrawColor(...BLACK)
   doc.setLineWidth(0.3)
@@ -551,6 +564,45 @@ export function generateIncidentReport({ incident, driverName, vehicleName }) {
 
   drawFooters(doc)
   doc.save(`Incident_${incident.id || 'report'}_${incident.date || ''}.pdf`)
+}
+
+/** Lay out attached photos in a 2-up grid; paginates as needed. */
+function drawPhotos(doc, y, photos, title, headerTitle) {
+  doc.setFont('helvetica', 'bold')
+  doc.setFontSize(11)
+  doc.setTextColor(...BLACK)
+  if (y > PAGE.h - 30) {
+    doc.addPage()
+    y = drawHeader(doc, headerTitle)
+  }
+  doc.text(`${title} (${photos.length})`, PAGE.margin, y)
+  y += 5
+
+  const gap = 6
+  const cellW = (PAGE.w - PAGE.margin * 2 - gap) / 2
+  const cellH = cellW * 0.7
+  let col = 0
+  photos.forEach((src) => {
+    if (y + cellH > PAGE.h - 18) {
+      doc.addPage()
+      y = drawHeader(doc, headerTitle)
+      col = 0
+    }
+    const x = PAGE.margin + col * (cellW + gap)
+    try {
+      doc.addImage(src, 'JPEG', x, y, cellW, cellH, undefined, 'FAST')
+    } catch {
+      doc.setDrawColor(...GRAY)
+      doc.rect(x, y, cellW, cellH)
+    }
+    col++
+    if (col === 2) {
+      col = 0
+      y += cellH + gap
+    }
+  })
+  if (col === 1) y += cellH + gap
+  return y + 4
 }
 
 export { fuelLevels }

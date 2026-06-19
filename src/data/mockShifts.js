@@ -127,6 +127,9 @@ function buildShift({ shiftId, driverId, vehicleId, dateStr, odoStart, inProgres
     odoEnd,
     fuelLitres: inProgress ? null : randInt(28, 55),
     status: inProgress ? 'active' : 'complete',
+    // Seed completed shifts all have a fully-completed inspection on record.
+    inspectionStatus: inProgress ? null : 'complete',
+    inspectionComplete: inProgress ? false : true,
     trips,
   }
 }

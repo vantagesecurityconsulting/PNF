@@ -253,7 +253,7 @@ export const useManagerStore = create(
     }),
     {
       name: 'shuttlelog-manager',
-      version: 2,
+      version: 3,
     },
   ),
 )

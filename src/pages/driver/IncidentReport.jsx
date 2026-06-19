@@ -7,6 +7,7 @@ import { useToastStore } from '../../store/useToastStore'
 import { Card } from '../../components/shared/Card'
 import { Button } from '../../components/shared/Button'
 import { Badge } from '../../components/shared/Badge'
+import { PhotoUploader } from '../../components/shared/PhotoUploader'
 import { formatTime } from '../../utils/formatters'
 import { INCIDENT_TYPES, INCIDENT_SEVERITY } from '../../data/mockIncidents'
 
@@ -29,6 +30,7 @@ export default function IncidentReport() {
   const [type, setType] = useState('')
   const [severity, setSeverity] = useState('Low')
   const [description, setDescription] = useState('')
+  const [photos, setPhotos] = useState([])
   const [error, setError] = useState('')
 
   if (!shiftStarted) {
@@ -49,6 +51,7 @@ export default function IncidentReport() {
       type,
       severity,
       description: description.trim(),
+      photos,
       reportedBy: driver?.name || 'Driver',
     }
     // File immediately to the manager system of record…
@@ -59,6 +62,7 @@ export default function IncidentReport() {
     setType('')
     setSeverity('Low')
     setDescription('')
+    setPhotos([])
     setError('')
   }
 
@@ -116,6 +120,11 @@ export default function IncidentReport() {
             placeholder="Describe the incident: where, when, who was involved, any injuries or damage…"
             className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
           />
+        </div>
+
+        <div>
+          <label className="mb-1.5 block text-sm font-bold text-ink">Photos (optional)</label>
+          <PhotoUploader value={photos} onChange={setPhotos} max={6} label="Add Photo" />
         </div>
 
         {error && <p className="text-sm font-semibold text-danger">{error}</p>}
