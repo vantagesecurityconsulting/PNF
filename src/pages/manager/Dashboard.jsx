@@ -14,6 +14,7 @@ import {
   TriangleAlert,
   Bell,
   ChevronRight,
+  Timer,
 } from 'lucide-react'
 import {
   LineChart,
@@ -38,9 +39,9 @@ import { LoadingState } from '../../components/shared/Spinner'
 import { EmptyState } from '../../components/shared/EmptyState'
 import { Modal } from '../../components/shared/Modal'
 import { useFakeLoad } from '../../hooks/useFakeLoad'
-import { buildDailyTrend, buildActivityFeed, buildAlerts } from '../../utils/analytics'
+import { buildDailyTrend, buildActivityFeed, buildAlerts, timingStats } from '../../utils/analytics'
 import { deriveLiveStatus, colorClass } from '../../utils/status'
-import { formatTime, formatDate } from '../../utils/formatters'
+import { formatTime, formatDate, formatMinutes } from '../../utils/formatters'
 import { generateOperationsSummary } from '../../utils/pdfGenerator'
 import { rangeSummary } from '../../utils/analytics'
 
@@ -84,6 +85,13 @@ export default function Dashboard() {
       return { vehicle: v, live, driverName: driver?.name, tripCount: completedToday, lastUpdate: lastEvent }
     })
   }, [vehicles, todayShifts, drivers])
+
+  const timing = useMemo(() => {
+    const d = new Date(`${referenceToday}T12:00:00`)
+    d.setDate(d.getDate() - 6)
+    const cutoff = d.toISOString().slice(0, 10)
+    return timingStats(trips.filter((t) => t.date >= cutoff))
+  }, [trips, referenceToday])
 
   const trend = useMemo(() => buildDailyTrend(trips, referenceToday), [trips, referenceToday])
   const feed = useMemo(
@@ -186,6 +194,25 @@ export default function Dashboard() {
                 <Line type="monotone" dataKey="avg" name="7-day avg" stroke="#f5a623" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
+          </Card>
+
+          {/* Operations timing (last 7 days) */}
+          <Card padded>
+            <div className="mb-3 flex items-center gap-2">
+              <Timer size={18} className="text-green" />
+              <h2 className="text-base font-extrabold text-ink">Operations Timing</h2>
+              <span className="text-xs font-semibold text-graytext">last 7 days avg</span>
+            </div>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              <TimingStat label="Trip Duration" value={timing.avgDuration} />
+              <TimingStat label="Airport Dwell" value={timing.avgDwell} />
+              <TimingStat label="Lot → Airport" value={timing.avgLegOut} />
+              <TimingStat label="Airport → Lot" value={timing.avgLegBack} />
+              <TimingStat label="Turnaround" value={timing.avgTurnaround} />
+            </div>
+            {timing.count === 0 && (
+              <p className="mt-2 text-sm text-graytext">No completed trips in the last 7 days.</p>
+            )}
           </Card>
         </div>
 
@@ -331,6 +358,15 @@ export default function Dashboard() {
           ))}
         </div>
       </Modal>
+    </div>
+  )
+}
+
+function TimingStat({ label, value }) {
+  return (
+    <div className="rounded-xl bg-offwhite px-3 py-2.5 text-center">
+      <div className="tabular text-lg font-black text-ink">{value != null ? formatMinutes(value) : '—'}</div>
+      <div className="text-[11px] font-bold uppercase tracking-wide text-graytext">{label}</div>
     </div>
   )
 }

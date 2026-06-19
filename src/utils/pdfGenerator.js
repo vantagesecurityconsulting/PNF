@@ -189,6 +189,8 @@ export function generateShiftReport({ shift, inspection, driver, vehicle }) {
       ['Odometer End', shift?.odoEnd != null ? `${shift.odoEnd.toLocaleString()} km` : '—'],
       ['Total Distance', km != null ? `${km.toLocaleString()} km` : '—'],
       ['Fuel Added', shift?.fuelLitres != null ? `${shift.fuelLitres} L` : '—'],
+      ['Break Time', shift?.breakMinutes != null ? formatMinutes(shift.breakMinutes) : '—'],
+      ['Active Time', shift?.activeMinutes != null ? formatMinutes(shift.activeMinutes) : '—'],
     ],
     'SHIFT SUMMARY',
   )

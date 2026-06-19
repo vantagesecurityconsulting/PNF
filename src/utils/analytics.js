@@ -6,7 +6,7 @@
  * fields / rollups once migrated; kept client-side here for the concept.
  */
 
-import { dateKey, formatDate } from './formatters'
+import { dateKey, formatDate, minutesBetween } from './formatters'
 
 const HOURS = Array.from({ length: 18 }, (_, i) => i + 6) // 6am … 11pm
 
@@ -218,6 +218,53 @@ export function buildAlerts({ vehicles = [], incidents = [], drivers = [], shift
 
   const order = { high: 0, medium: 1, low: 2 }
   return alerts.sort((a, b) => order[a.severity] - order[b.severity])
+}
+
+/**
+ * Operational timing averages over a set of trips: trip duration, airport
+ * dwell, each leg, and turnaround (gap between consecutive trips on a shift).
+ */
+export function timingStats(trips) {
+  const completed = trips.filter((t) => t.status === 'complete')
+  const avg = (arr) => (arr.length ? Math.round(arr.reduce((a, b) => a + b, 0) / arr.length) : null)
+
+  const durations = []
+  const dwell = []
+  const legOut = []
+  const legBack = []
+  completed.forEach((t) => {
+    const dur = minutesBetween(t.departLotTime, t.arriveLotTime)
+    if (dur != null) durations.push(dur)
+    const dw = minutesBetween(t.arriveAirportTime, t.departAirportTime)
+    if (dw != null) dwell.push(dw)
+    const lo = minutesBetween(t.departLotTime, t.arriveAirportTime)
+    if (lo != null) legOut.push(lo)
+    const lb = minutesBetween(t.departAirportTime, t.arriveLotTime)
+    if (lb != null) legBack.push(lb)
+  })
+
+  // Turnaround: gap between consecutive trips within the same shift.
+  const gaps = []
+  const byShift = {}
+  completed.forEach((t) => {
+    ;(byShift[t.shiftId] = byShift[t.shiftId] || []).push(t)
+  })
+  Object.values(byShift).forEach((list) => {
+    const sorted = [...list].sort((a, b) => ((a.departLotTime || '') < (b.departLotTime || '') ? -1 : 1))
+    for (let i = 1; i < sorted.length; i++) {
+      const g = minutesBetween(sorted[i - 1].arriveLotTime, sorted[i].departLotTime)
+      if (g != null && g < 180) gaps.push(g) // ignore long breaks between blocks
+    }
+  })
+
+  return {
+    count: completed.length,
+    avgDuration: avg(durations),
+    avgDwell: avg(dwell),
+    avgLegOut: avg(legOut),
+    avgLegBack: avg(legBack),
+    avgTurnaround: avg(gaps),
+  }
 }
 
 /** Fuel log + economy (L/100km) for a vehicle, derived from shift records. */

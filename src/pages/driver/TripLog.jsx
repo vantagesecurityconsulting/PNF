@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Bus, PlaneLanding, PlaneTakeoff, MapPin, AlertTriangle, ArrowRight, Clock, Undo2, XCircle, Pencil } from 'lucide-react'
-import { useShiftStore, selectTripTotals } from '../../store/useShiftStore'
+import { Bus, PlaneLanding, PlaneTakeoff, MapPin, AlertTriangle, ArrowRight, Clock, Undo2, XCircle, Pencil, Coffee, Play } from 'lucide-react'
+import { useShiftStore, selectTripTotals, selectOnBreak } from '../../store/useShiftStore'
 import { useToastStore } from '../../store/useToastStore'
 import { TripStatusStrip } from '../../components/shared/TripStatusStrip'
 import { BigButton } from '../../components/shared/BigButton'
@@ -26,7 +26,12 @@ export default function TripLog() {
   const undoLastStep = useShiftStore((s) => s.undoLastStep)
   const cancelCurrentTrip = useShiftStore((s) => s.cancelCurrentTrip)
   const setCurrentTripTime = useShiftStore((s) => s.setCurrentTripTime)
+  const breaks = useShiftStore((s) => s.breaks)
+  const startBreak = useShiftStore((s) => s.startBreak)
+  const endBreak = useShiftStore((s) => s.endBreak)
   const addToast = useToastStore((s) => s.addToast)
+
+  const onBreak = selectOnBreak(breaks)
 
   const [editOpen, setEditOpen] = useState(false)
   const [cancelOpen, setCancelOpen] = useState(false)
@@ -112,7 +117,27 @@ export default function TripLog() {
             Cancel trip
           </Button>
         )}
+        {onBreak ? (
+          <Button size="sm" icon={Play} onClick={() => { endBreak(); addToast('Break ended — welcome back', 'success') }}>
+            End break
+          </Button>
+        ) : (
+          step === 1 && (
+            <Button size="sm" variant="secondary" icon={Coffee} onClick={() => { startBreak(); addToast('Break started', 'warning') }}>
+              Start break
+            </Button>
+          )
+        )}
       </div>
+
+      {onBreak && (
+        <Card padded className="flex items-center gap-3 border-amber/30 bg-amber/10 py-3">
+          <Coffee size={20} className="shrink-0 text-amber" />
+          <span className="flex-1 text-sm font-semibold text-amber">
+            On break — trip logging is paused. Tap “End break” to resume.
+          </span>
+        </Card>
+      )}
 
       {/* Running totals */}
       <div className="grid grid-cols-2 gap-3">
@@ -129,7 +154,7 @@ export default function TripLog() {
           color="green"
           done={!!currentTrip.departLotTime}
           timestamp={currentTrip.departLotTime ? formatTime(currentTrip.departLotTime) : null}
-          disabled={step < 1}
+          disabled={step < 1 || onBreak}
           onClick={() => handleStep(1)}
         />
 
@@ -158,7 +183,7 @@ export default function TripLog() {
           color="amber"
           done={!!currentTrip.arriveAirportTime}
           timestamp={currentTrip.arriveAirportTime ? formatTime(currentTrip.arriveAirportTime) : null}
-          disabled={step < 2}
+          disabled={step < 2 || onBreak}
           onClick={() => handleStep(2)}
         />
 
@@ -175,7 +200,7 @@ export default function TripLog() {
           color="info"
           done={!!currentTrip.departAirportTime}
           timestamp={currentTrip.departAirportTime ? formatTime(currentTrip.departAirportTime) : null}
-          disabled={step < 3}
+          disabled={step < 3 || onBreak}
           onClick={() => handleStep(3)}
         />
 
@@ -199,7 +224,7 @@ export default function TripLog() {
           }
           icon={MapPin}
           color="green"
-          disabled={step < 4}
+          disabled={step < 4 || onBreak}
           onClick={() => handleStep(4)}
         />
       </div>

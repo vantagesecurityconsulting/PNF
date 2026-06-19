@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { TriangleAlert, FileDown, Filter } from 'lucide-react'
+import { TriangleAlert, FileDown, Filter, Sheet } from 'lucide-react'
+import { downloadCSV } from '../../utils/csv'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useScope } from '../../hooks/useScope'
 import { useToastStore } from '../../store/useToastStore'
@@ -103,11 +104,34 @@ export default function Incidents() {
     </div>
   )
 
+  const exportCsv = () => {
+    downloadCSV('shuttlelog-incidents', filtered, [
+      { header: 'Date', value: (i) => i.date },
+      { header: 'Type', value: (i) => i.type },
+      { header: 'Severity', value: (i) => i.severity },
+      { header: 'Status', value: (i) => i.status },
+      { header: 'Reported By', value: (i) => i.reportedBy || driverName(i.driverId) },
+      { header: 'Vehicle', value: (i) => vehicleName(i.vehicleId) },
+      { header: 'Description', value: (i) => i.description },
+      { header: 'Manager Notes', value: (i) => i.managerNotes || '' },
+    ])
+    addToast(`Exported ${filtered.length} incidents to CSV`, 'success')
+  }
+
   if (loading) return <LoadingState label="Loading incidents…" />
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Incident Reports" subtitle="Driver-filed incidents — review, resolve & export" icon={TriangleAlert} />
+      <SectionHeader
+        title="Incident Reports"
+        subtitle="Driver-filed incidents — review, resolve & export"
+        icon={TriangleAlert}
+        action={
+          <Button variant="secondary" icon={Sheet} onClick={exportCsv} disabled={filtered.length === 0}>
+            Export CSV
+          </Button>
+        }
+      />
 
       <DataTable
         columns={columns}

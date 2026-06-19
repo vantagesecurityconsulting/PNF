@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Gauge, FileDown, ClipboardCheck, LogOut, Route, Users, Clock, AlertTriangle, Fuel, CheckCircle2 } from 'lucide-react'
-import { useShiftStore, selectTripTotals } from '../../store/useShiftStore'
+import { useShiftStore, selectTripTotals, selectBreakMinutes } from '../../store/useShiftStore'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useToastStore } from '../../store/useToastStore'
 import { allInspectionItems } from '../../data/inspectionItems'
@@ -23,7 +23,7 @@ export default function EndShift() {
 
   const {
     shiftStarted, driverId, vehicleId, locationId, shiftDate, odoStart, odoEnd, fuelLitres,
-    startedAt, trips, incidents, inspectionResults, inspectionPhotos, fuelLevel, inspectionNotes,
+    startedAt, trips, incidents, breaks, inspectionResults, inspectionPhotos, fuelLevel, inspectionNotes,
     inspectionSignature, inspectionComplete, setOdoEnd, setFuelLitres, endShift,
   } = store
 
@@ -39,6 +39,8 @@ export default function EndShift() {
   const totalKm =
     odoEnd !== '' && !isNaN(odoEndNum) && odoEndNum >= Number(odoStart) ? odoEndNum - Number(odoStart) : null
   const shiftDuration = minutesBetween(startedAt, new Date().toISOString())
+  const breakMinutes = selectBreakMinutes(breaks)
+  const activeMinutes = shiftDuration != null ? Math.max(0, shiftDuration - breakMinutes) : null
   const failedItems = allInspectionItems.filter((i) => inspectionResults[i.key] === 'fail')
 
   // Inspection completeness drives the driver's compliance score.
@@ -60,6 +62,9 @@ export default function EndShift() {
     status: 'complete',
     inspectionStatus,
     inspectionComplete,
+    breaks: breaks.map((b) => ({ ...b })),
+    breakMinutes,
+    activeMinutes,
     trips: trips.map((t) => ({ ...t })),
   })
 
@@ -142,6 +147,8 @@ export default function EndShift() {
           <Info label="Vehicle" value={vehicle?.busNum} />
           <Info label="Date" value={formatDate(shiftDate)} />
           <Info label="Shift Duration" value={shiftDuration ? formatMinutes(shiftDuration) : '—'} />
+          <Info label="Break Time" value={formatMinutes(breakMinutes)} />
+          <Info label="Active Time" value={activeMinutes != null ? formatMinutes(activeMinutes) : '—'} />
         </div>
         <div className="grid grid-cols-3 gap-3 border-t border-black/5 pt-4">
           <Stat icon={Route} label="Trips" value={totals.totalTrips} />

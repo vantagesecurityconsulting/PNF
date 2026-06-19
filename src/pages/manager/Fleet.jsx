@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Bus, Wrench, Save, CheckCircle2, XCircle, Route, Calendar, Plus, AlertTriangle, Power, Fuel } from 'lucide-react'
+import { Bus, Wrench, Save, CheckCircle2, XCircle, Route, Calendar, Plus, AlertTriangle, Power, Fuel, Sheet } from 'lucide-react'
+import { downloadCSV } from '../../utils/csv'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useScope } from '../../hooks/useScope'
@@ -108,6 +109,22 @@ export default function Fleet() {
 
   const inputCls = 'h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green'
 
+  const exportCsv = () => {
+    downloadCSV('shuttlelog-fleet', vehicles, [
+      { header: 'Bus #', value: (v) => v.busNum },
+      { header: 'Make', value: (v) => v.make },
+      { header: 'Model', value: (v) => v.model },
+      { header: 'Year', value: (v) => v.year },
+      { header: 'Capacity', value: (v) => v.capacity },
+      { header: 'Status', value: (v) => v.status },
+      { header: 'Odometer', value: (v) => v.odometer },
+      { header: 'Last Inspection', value: (v) => v.lastInspection || '' },
+      { header: 'Inspection Result', value: (v) => v.inspectionResult || '' },
+      { header: 'Next Service Due', value: (v) => v.nextServiceDue || '' },
+    ])
+    addToast(`Exported ${vehicles.length} vehicles to CSV`, 'success')
+  }
+
   if (loading) return <LoadingState label="Loading fleet…" />
 
   return (
@@ -116,7 +133,14 @@ export default function Fleet() {
         title="Fleet Status"
         subtitle="Vehicle roster, inspection results & maintenance"
         icon={Bus}
-        action={<Button icon={Plus} onClick={() => setAddOpen(true)}>Add Vehicle</Button>}
+        action={
+          <div className="flex gap-2">
+            <Button variant="secondary" icon={Sheet} onClick={exportCsv} disabled={vehicles.length === 0}>
+              CSV
+            </Button>
+            <Button icon={Plus} onClick={() => setAddOpen(true)}>Add Vehicle</Button>
+          </div>
+        }
       />
 
       {/* Status legend */}

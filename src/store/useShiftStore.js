@@ -46,6 +46,9 @@ const initialState = {
   // Incidents filed during this shift
   incidents: [],
 
+  // Break / pause periods: [{ start, end }]
+  breaks: [],
+
   // Inspection
   inspectionComplete: false,
   inspectionResults: emptyInspectionResults(),
@@ -76,6 +79,7 @@ export const useShiftStore = create(
           odoStart,
           fuelLitres: '',
           incidents: [],
+          breaks: [],
           startedAt: new Date().toISOString(),
           currentStep: 1,
           currentTripNum: 1,
@@ -84,6 +88,12 @@ export const useShiftStore = create(
         }),
 
       setFuelLitres: (fuelLitres) => set({ fuelLitres }),
+
+      // Break / pause tracking
+      startBreak: () =>
+        set((s) => (s.breaks.some((b) => !b.end) ? {} : { breaks: [...s.breaks, { start: new Date().toISOString(), end: null }] })),
+      endBreak: () =>
+        set((s) => ({ breaks: s.breaks.map((b) => (b.end ? b : { ...b, end: new Date().toISOString() })) })),
 
       // Incident reports filed by the driver during the shift.
       addShiftIncident: (incident) =>
@@ -208,6 +218,15 @@ export const useShiftStore = create(
 function clamp(v, min, max) {
   return Math.max(min, Math.min(max, v))
 }
+
+// Total break minutes (counts an open break up to `nowMs`).
+export const selectBreakMinutes = (breaks = [], nowMs = Date.now()) =>
+  breaks.reduce(
+    (sum, b) => sum + Math.max(0, Math.round(((b.end ? new Date(b.end) : nowMs) - new Date(b.start)) / 60000)),
+    0,
+  )
+
+export const selectOnBreak = (breaks = []) => breaks.some((b) => !b.end)
 
 // Derived selectors (call with store values) -------------------------------
 export const selectTripTotals = (trips) => {

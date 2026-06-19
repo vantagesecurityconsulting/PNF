@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Users, Route, ArrowRight, Plus, StickyNote } from 'lucide-react'
+import { Users, Route, ArrowRight, Plus, StickyNote, Sheet, Trophy } from 'lucide-react'
+import { downloadCSV } from '../../utils/csv'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useScope } from '../../hooks/useScope'
 import { useToastStore } from '../../store/useToastStore'
@@ -31,6 +32,25 @@ export default function Drivers() {
     [drivers, shifts, inspections, referenceToday],
   )
 
+  const leaderboard = useMemo(
+    () => [...cards].filter((c) => c.stats.totalTrips > 0).sort((a, b) => b.stats.totalTrips - a.stats.totalTrips).slice(0, 5),
+    [cards],
+  )
+
+  const exportCsv = () => {
+    downloadCSV('shuttlelog-staff', cards, [
+      { header: 'Name', value: (c) => c.driver.name },
+      { header: 'Employee #', value: (c) => c.driver.employeeId },
+      { header: 'Status', value: (c) => c.driver.status },
+      { header: 'Total Trips', value: (c) => c.stats.totalTrips },
+      { header: 'Total Passengers', value: (c) => c.stats.totalPax },
+      { header: 'Shifts', value: (c) => c.stats.shiftCount },
+      { header: 'Avg Trips/Shift', value: (c) => c.stats.avgTripsPerShift },
+      { header: 'Compliance %', value: (c) => c.stats.complianceRate },
+    ])
+    addToast(`Exported ${cards.length} staff to CSV`, 'success')
+  }
+
   const submit = () => {
     if (!name.trim() || !employeeId.trim()) {
       setErr('Name and employee number are required.')
@@ -54,8 +74,45 @@ export default function Drivers() {
         title="Staff Roster"
         subtitle="Team overview & shift performance"
         icon={Users}
-        action={<Button icon={Plus} onClick={() => setAddOpen(true)}>Add Staff</Button>}
+        action={
+          <div className="flex gap-2">
+            <Button variant="secondary" icon={Sheet} onClick={exportCsv} disabled={cards.length === 0}>
+              CSV
+            </Button>
+            <Button icon={Plus} onClick={() => setAddOpen(true)}>Add Staff</Button>
+          </div>
+        }
       />
+
+      {/* Leaderboard */}
+      {leaderboard.length > 0 && (
+        <Card padded>
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+            <Trophy size={18} className="text-amber" /> Leaderboard
+            <span className="text-xs font-semibold text-graytext">by total trips</span>
+          </h2>
+          <div className="mt-3 space-y-1.5">
+            {leaderboard.map(({ driver, stats }, i) => (
+              <button
+                key={driver.id}
+                onClick={() => navigate(`/manager/drivers/${driver.id}`)}
+                className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-gray-50"
+              >
+                <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                  i === 0 ? 'bg-amber text-white' : i === 1 ? 'bg-gray-300 text-ink' : i === 2 ? 'bg-amber/40 text-amber' : 'bg-gray-100 text-graytext'
+                }`}>
+                  {i + 1}
+                </span>
+                <DriverAvatar driver={driver} size="sm" />
+                <span className="flex-1 truncate text-sm font-bold text-ink">{driver.name}</span>
+                <span className="tabular text-sm font-bold text-ink">{stats.totalTrips} trips</span>
+                <span className="tabular hidden w-20 text-right text-xs font-semibold text-graytext sm:inline">{stats.totalPax} pax</span>
+                <span className="tabular hidden w-16 text-right text-xs font-semibold text-graytext sm:inline">{stats.complianceRate}%</span>
+              </button>
+            ))}
+          </div>
+        </Card>
+      )}
 
       {cards.length === 0 ? (
         <Card>

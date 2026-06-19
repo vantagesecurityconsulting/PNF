@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Outlet, NavLink, Link, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard,
@@ -18,12 +18,14 @@ import {
   LogOut,
   ChevronDown,
   Bell,
+  Search,
 } from 'lucide-react'
 import { Logo, ParkNFlyMark } from '../shared/Logo'
 import { useManagerStore } from '../../store/useManagerStore'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useScope } from '../../hooks/useScope'
 import { buildAlerts } from '../../utils/analytics'
+import { SearchPalette } from './SearchPalette'
 
 const NAV = [
   { to: '/manager', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -44,7 +46,19 @@ const OWNER_NAV = [
 export default function ManagerLayout() {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
   const navigate = useNavigate()
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setSearchOpen((o) => !o)
+      }
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [])
 
   const locations = useManagerStore((s) => s.locations)
   const currentUser = useAuthStore((s) => s.currentUser)
@@ -74,6 +88,15 @@ export default function ManagerLayout() {
 
       {/* Nav */}
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
+        <button
+          onClick={() => { setSearchOpen(true); setMobileOpen(false) }}
+          className={`mb-1 flex w-full items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-bold text-graytext transition-colors hover:bg-gray-50 ${showLabels ? '' : 'justify-center'}`}
+          title="Search (⌘K)"
+        >
+          <Search size={20} strokeWidth={2.2} />
+          {showLabels && <span className="flex-1 text-left">Search</span>}
+          {showLabels && <kbd className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold">⌘K</kbd>}
+        </button>
         {NAV.map((item) => (
           <NavItem
             key={item.to}
@@ -199,6 +222,8 @@ export default function ManagerLayout() {
           <Outlet />
         </main>
       </div>
+
+      <SearchPalette open={searchOpen} onClose={() => setSearchOpen(false)} />
     </div>
   )
 }

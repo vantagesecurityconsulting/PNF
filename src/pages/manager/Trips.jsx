@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Table2, FileDown, Filter, X } from 'lucide-react'
+import { Table2, FileDown, Filter, X, Sheet } from 'lucide-react'
+import { downloadCSV } from '../../utils/csv'
 import { useScope } from '../../hooks/useScope'
 import { useToastStore } from '../../store/useToastStore'
 import { SectionHeader } from '../../components/shared/SectionHeader'
@@ -50,6 +51,18 @@ export default function Trips() {
     setEndDate('')
   }
 
+  const setPreset = (days) => {
+    if (days === 'all') {
+      setStartDate('')
+      setEndDate('')
+      return
+    }
+    const d = new Date(`${referenceToday}T12:00:00`)
+    d.setDate(d.getDate() - (days - 1))
+    setStartDate(d.toISOString().slice(0, 10))
+    setEndDate(referenceToday)
+  }
+
   const exportPdf = () => {
     const dates = filtered.map((t) => t.date).sort()
     const start = startDate || dates[0] || referenceToday
@@ -60,6 +73,24 @@ export default function Trips() {
       ...summary,
     })
     addToast(`Exported ${filtered.length} trips to PDF`, 'success')
+  }
+
+  const exportCsv = () => {
+    downloadCSV('shuttlelog-trips', filtered, [
+      { header: 'Date', value: (t) => t.date },
+      { header: 'Driver', value: (t) => getDriverName(t.driverId) },
+      { header: 'Vehicle', value: (t) => getVehicleLabel(t.vehicleId) },
+      { header: 'Trip #', value: (t) => t.tripNumber },
+      { header: 'Depart Lot', value: (t) => formatTime(t.departLotTime) },
+      { header: 'Arrive Airport', value: (t) => formatTime(t.arriveAirportTime) },
+      { header: 'Depart Airport', value: (t) => formatTime(t.departAirportTime) },
+      { header: 'Arrive Lot', value: (t) => formatTime(t.arriveLotTime) },
+      { header: 'Pax To Airport', value: (t) => t.paxToAirport ?? 0 },
+      { header: 'Pax From Airport', value: (t) => (t.status === 'complete' ? t.paxFromAirport ?? 0 : '') },
+      { header: 'Duration (min)', value: (t) => minutesBetween(t.departLotTime, t.arriveLotTime) ?? '' },
+      { header: 'Status', value: (t) => t.status },
+    ])
+    addToast(`Exported ${filtered.length} trips to CSV`, 'success')
   }
 
   const columns = [
@@ -98,6 +129,17 @@ export default function Trips() {
       <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide text-graytext">
         <Filter size={14} /> Filters
       </span>
+      <div className="flex gap-1">
+        {[{ l: 'Today', d: 1 }, { l: '7d', d: 7 }, { l: '30d', d: 30 }, { l: 'All', d: 'all' }].map((p) => (
+          <button
+            key={p.l}
+            onClick={() => setPreset(p.d)}
+            className="rounded-lg bg-white px-2.5 py-1.5 text-xs font-bold text-graytext hover:bg-green-light hover:text-green-dark"
+          >
+            {p.l}
+          </button>
+        ))}
+      </div>
       <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className={selectCls} aria-label="Start date" />
       <span className="text-graytext">–</span>
       <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className={selectCls} aria-label="End date" />
@@ -140,9 +182,14 @@ export default function Trips() {
         subtitle="Complete trip history across the fleet"
         icon={Table2}
         action={
-          <Button icon={FileDown} onClick={exportPdf} disabled={filtered.length === 0}>
-            Export PDF
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="secondary" icon={Sheet} onClick={exportCsv} disabled={filtered.length === 0}>
+              CSV
+            </Button>
+            <Button icon={FileDown} onClick={exportPdf} disabled={filtered.length === 0}>
+              Export PDF
+            </Button>
+          </div>
         }
       />
 
