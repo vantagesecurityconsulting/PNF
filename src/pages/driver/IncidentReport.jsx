@@ -66,12 +66,12 @@ export default function IncidentReport() {
     setError('')
   }
 
-  const inputCls = 'h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold text-ink outline-none focus:border-green'
+  const inputCls = 'h-12 w-full rounded-xl border border-line bg-surface px-4 font-semibold text-white outline-none focus:border-green'
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
       <div>
-        <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-ink">
+        <h1 className="flex items-center gap-2 text-2xl font-black tracking-tight text-white">
           <TriangleAlert className="text-amber" size={24} /> Report an Incident
         </h1>
         <p className="text-sm text-graytext">File a report for collisions, injuries, hazards, or near misses.</p>
@@ -79,7 +79,7 @@ export default function IncidentReport() {
 
       <Card padded className="space-y-4">
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-ink">Incident Type</label>
+          <label className="mb-1.5 block text-sm font-bold text-white">Incident Type</label>
           <select value={type} onChange={(e) => { setType(e.target.value); setError('') }} className={inputCls}>
             <option value="">Select type…</option>
             {INCIDENT_TYPES.map((t) => (
@@ -89,7 +89,7 @@ export default function IncidentReport() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-ink">Severity</label>
+          <label className="mb-1.5 block text-sm font-bold text-white">Severity</label>
           <div className="grid grid-cols-4 gap-2">
             {INCIDENT_SEVERITY.map((s) => (
               <button
@@ -98,11 +98,11 @@ export default function IncidentReport() {
                 className={`h-11 rounded-xl border-2 text-sm font-bold transition-colors ${
                   severity === s
                     ? s === 'Low'
-                      ? 'border-gray-400 bg-gray-100 text-ink'
+                      ? 'border-gray-400 bg-white/5 text-white'
                       : s === 'Medium'
                         ? 'border-amber bg-amber/10 text-amber'
                         : 'border-danger bg-danger/10 text-danger'
-                    : 'border-gray-200 text-graytext hover:bg-gray-50'
+                    : 'border-line text-graytext hover:bg-white/5'
                 }`}
               >
                 {s}
@@ -112,18 +112,18 @@ export default function IncidentReport() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-ink">What happened?</label>
+          <label className="mb-1.5 block text-sm font-bold text-white">What happened?</label>
           <textarea
             value={description}
             onChange={(e) => { setDescription(e.target.value); setError('') }}
             rows={5}
             placeholder="Describe the incident: where, when, who was involved, any injuries or damage…"
-            className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
+            className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-white outline-none focus:border-green"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-ink">Photos (optional)</label>
+          <label className="mb-1.5 block text-sm font-bold text-white">Photos (optional)</label>
           <PhotoUploader value={photos} onChange={setPhotos} max={6} label="Add Photo" />
         </div>
 
@@ -144,7 +144,7 @@ export default function IncidentReport() {
                 <div className="flex items-center gap-2">
                   <CheckCircle2 size={16} className="text-green" />
                   <div>
-                    <div className="text-sm font-bold text-ink">{inc.type}</div>
+                    <div className="text-sm font-bold text-white">{inc.type}</div>
                     <div className="text-xs text-graytext">{formatTime(inc.time)}</div>
                   </div>
                 </div>

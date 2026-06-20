@@ -9,7 +9,7 @@ export function SectionHeader({ title, subtitle, action, className = '', icon: I
           </div>
         )}
         <div>
-          <h1 className="text-xl font-extrabold tracking-tight text-ink sm:text-2xl">{title}</h1>
+          <h1 className="text-xl font-extrabold tracking-tight text-white sm:text-2xl">{title}</h1>
           {subtitle && <p className="mt-0.5 text-sm text-graytext">{subtitle}</p>}
         </div>
       </div>

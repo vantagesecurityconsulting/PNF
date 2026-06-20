@@ -8,7 +8,7 @@ export function KpiCard({ label, value, delta, deltaLabel, icon: Icon, color = '
   const up = Number(delta) >= 0
 
   return (
-    <div className={`rounded-2xl bg-white p-4 shadow-card border border-black/5 ${className}`}>
+    <div className={`rounded-2xl bg-surface p-4 shadow-card border border-line ${className}`}>
       <div className="flex items-start justify-between">
         <span className="text-xs font-bold uppercase tracking-wide text-graytext">{label}</span>
         {Icon && (
@@ -17,7 +17,7 @@ export function KpiCard({ label, value, delta, deltaLabel, icon: Icon, color = '
           </div>
         )}
       </div>
-      <div className="mt-2 tabular text-3xl font-black tracking-tight text-ink">{value}</div>
+      <div className="mt-2 tabular text-3xl font-black tracking-tight text-white">{value}</div>
       {hasDelta && (
         <div
           className={`mt-1 flex items-center gap-1 text-xs font-bold ${

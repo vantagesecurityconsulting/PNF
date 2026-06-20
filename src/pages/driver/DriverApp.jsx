@@ -82,7 +82,7 @@ export default function DriverApp() {
   return (
     <div className="mx-auto max-w-xl">
       <div className="mb-6 text-center">
-        <h1 className="text-2xl font-black tracking-tight text-ink">Start Your Shift</h1>
+        <h1 className="text-2xl font-black tracking-tight text-white">Start Your Shift</h1>
         <p className="mt-1 text-sm text-graytext">
           {today.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
         </p>
@@ -179,11 +179,13 @@ export default function DriverApp() {
 
         {/* Date */}
         <Field label="Shift Date" icon={Calendar}>
-          <input type="text" readOnly value={formatDate(today)} className="h-12 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-semibold text-graytext" />
+          <input type="text" readOnly value={formatDate(today)} className="h-12 w-full rounded-xl border border-line bg-white/5 px-4 font-semibold text-graytext" />
         </Field>
 
         <Button size="lg" fullWidth icon={Play} onClick={handleStart}>Start Shift</Button>
       </Card>
+
+      <p className="mt-6 text-center text-[11px] text-muted">Powered by Drivex</p>
     </div>
   )
 }
@@ -191,7 +193,7 @@ export default function DriverApp() {
 function Field({ label, icon: Icon, error, children }) {
   return (
     <div>
-      <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-ink">
+      <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-white">
         {Icon && <Icon size={15} className="text-graytext" />} {label}
       </label>
       {children}
@@ -201,6 +203,6 @@ function Field({ label, icon: Icon, error, children }) {
 }
 
 const inputCls = (error) =>
-  `h-12 w-full rounded-xl border bg-white px-4 font-semibold text-ink outline-none transition-colors focus:border-green disabled:bg-gray-50 disabled:text-graytext ${
-    error ? 'border-danger' : 'border-gray-300'
+  `h-12 w-full rounded-xl border bg-surface px-4 font-semibold text-white outline-none transition-colors focus:border-green disabled:bg-white/5 disabled:text-graytext ${
+    error ? 'border-danger' : 'border-line'
   }`

@@ -64,7 +64,7 @@ export default function Drivers() {
     setErr('')
   }
 
-  const inputCls = 'h-11 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold text-ink outline-none focus:border-green'
+  const inputCls = 'h-11 w-full rounded-xl border border-line bg-surface px-4 font-semibold text-white outline-none focus:border-green'
 
   if (loading) return <LoadingState label="Loading staff…" />
 
@@ -87,7 +87,7 @@ export default function Drivers() {
       {/* Leaderboard */}
       {leaderboard.length > 0 && (
         <Card padded>
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
             <Trophy size={18} className="text-amber" /> Leaderboard
             <span className="text-xs font-semibold text-graytext">by total trips</span>
           </h2>
@@ -96,16 +96,16 @@ export default function Drivers() {
               <button
                 key={driver.id}
                 onClick={() => navigate(`/manager/drivers/${driver.id}`)}
-                className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-gray-50"
+                className="flex w-full items-center gap-3 rounded-xl px-2 py-2 text-left hover:bg-white/5"
               >
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black ${
-                  i === 0 ? 'bg-amber text-white' : i === 1 ? 'bg-gray-300 text-ink' : i === 2 ? 'bg-amber/40 text-amber' : 'bg-gray-100 text-graytext'
+                  i === 0 ? 'bg-amber text-white' : i === 1 ? 'bg-white/15 text-white' : i === 2 ? 'bg-amber/40 text-amber' : 'bg-white/5 text-graytext'
                 }`}>
                   {i + 1}
                 </span>
                 <DriverAvatar driver={driver} size="sm" />
-                <span className="flex-1 truncate text-sm font-bold text-ink">{driver.name}</span>
-                <span className="tabular text-sm font-bold text-ink">{stats.totalTrips} trips</span>
+                <span className="flex-1 truncate text-sm font-bold text-white">{driver.name}</span>
+                <span className="tabular text-sm font-bold text-white">{stats.totalTrips} trips</span>
                 <span className="tabular hidden w-20 text-right text-xs font-semibold text-graytext sm:inline">{stats.totalPax} pax</span>
                 <span className="tabular hidden w-16 text-right text-xs font-semibold text-graytext sm:inline">{stats.complianceRate}%</span>
               </button>
@@ -117,7 +117,7 @@ export default function Drivers() {
       {cards.length === 0 ? (
         <Card>
           <div className="py-10 text-center">
-            <p className="font-semibold text-ink">No staff at this location yet.</p>
+            <p className="font-semibold text-white">No staff at this location yet.</p>
             <Button className="mt-4" icon={Plus} onClick={() => setAddOpen(true)}>Add your first staff member</Button>
           </div>
         </Card>
@@ -132,7 +132,7 @@ export default function Drivers() {
                   <div className="flex items-center gap-3">
                     <DriverAvatar driver={driver} size="lg" />
                     <div>
-                      <div className="text-base font-extrabold text-ink">{driver.name}</div>
+                      <div className="text-base font-extrabold text-white">{driver.name}</div>
                       <div className="text-xs font-semibold text-graytext">{driver.employeeId}</div>
                     </div>
                   </div>
@@ -141,7 +141,7 @@ export default function Drivers() {
                   </Badge>
                 </div>
 
-                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-black/5 pt-4 text-center">
+                <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-4 text-center">
                   <Metric label="Today" value={stats.todayTrips} sub="trips" />
                   <Metric label="Today" value={stats.todayPax} sub="pax" />
                   <Metric label="Compliance" value={`${stats.complianceRate}%`} />
@@ -198,7 +198,7 @@ export default function Drivers() {
 function Metric({ label, value, sub }) {
   return (
     <div>
-      <div className="tabular text-xl font-black text-ink">{value}</div>
+      <div className="tabular text-xl font-black text-white">{value}</div>
       <div className="text-[11px] font-bold uppercase tracking-wide text-graytext">
         {label} {sub && <span className="lowercase">{sub}</span>}
       </div>

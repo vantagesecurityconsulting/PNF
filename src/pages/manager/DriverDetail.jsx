@@ -120,7 +120,7 @@ export default function DriverDetail() {
 
   return (
     <div className="space-y-6">
-      <Link to="/manager/drivers" className="inline-flex items-center gap-1.5 text-sm font-bold text-graytext hover:text-ink">
+      <Link to="/manager/drivers" className="inline-flex items-center gap-1.5 text-sm font-bold text-graytext hover:text-white">
         <ArrowLeft size={16} /> Back to roster
       </Link>
 
@@ -140,7 +140,7 @@ export default function DriverDetail() {
             <input ref={photoInput} type="file" accept="image/*" onChange={onPhotoPick} className="hidden" />
           </div>
           <div>
-            <h1 className="text-2xl font-black tracking-tight text-ink">{driver.name}</h1>
+            <h1 className="text-2xl font-black tracking-tight text-white">{driver.name}</h1>
             <div className="mt-1 flex items-center gap-2 text-sm text-graytext">
               <span className="font-semibold">{driver.employeeId}</span>
               <Badge color={driver.status === 'on-leave' ? 'gray' : stats.onShiftToday ? 'green' : 'amber'} dot>
@@ -161,7 +161,7 @@ export default function DriverDetail() {
 
       {/* Manager notes */}
       <Card padded>
-        <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+        <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
           <StickyNote size={18} className="text-amber" /> Manager Notes
           <span className="text-xs font-semibold text-graytext">(private — not visible to drivers)</span>
         </h2>
@@ -170,7 +170,7 @@ export default function DriverDetail() {
           onChange={(e) => setNotes(e.target.value)}
           rows={3}
           placeholder="Performance notes, certifications, reminders, HR follow-ups…"
-          className="mt-3 w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
+          className="mt-3 w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-white outline-none focus:border-green"
         />
         <Button
           className="mt-2"
@@ -184,7 +184,7 @@ export default function DriverDetail() {
 
       {/* 30-day chart */}
       <Card padded>
-        <h2 className="mb-4 text-base font-extrabold text-ink">Trips per Day — Last 30 Days</h2>
+        <h2 className="mb-4 text-base font-extrabold text-white">Trips per Day — Last 30 Days</h2>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={series} margin={{ top: 5, right: 8, left: -20, bottom: 0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#ececea" vertical={false} />
@@ -201,11 +201,11 @@ export default function DriverDetail() {
 
       {/* Inspection compliance breakdown */}
       <Card padded>
-        <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+        <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
           <ShieldCheck size={18} className="text-green" /> Inspection Compliance
         </h2>
         <div className="mt-3 flex items-center gap-5">
-          <div className="tabular text-4xl font-black text-ink">{stats.complianceRate}%</div>
+          <div className="tabular text-4xl font-black text-white">{stats.complianceRate}%</div>
           <div className="flex-1">
             <ProgressBar
               value={stats.compliantShifts}
@@ -229,7 +229,7 @@ export default function DriverDetail() {
 
       {/* Shift history */}
       <div>
-        <h2 className="mb-3 flex items-center gap-2 text-base font-extrabold text-ink">
+        <h2 className="mb-3 flex items-center gap-2 text-base font-extrabold text-white">
           <Bus size={18} className="text-green" /> Shift History
           <span className="text-sm font-semibold text-graytext">(last {Math.min(14, stats.shifts.length)})</span>
         </h2>

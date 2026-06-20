@@ -38,14 +38,14 @@ export function BigButton({
   if (disabled) {
     return (
       <div
-        className={`flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 px-5 py-5 ${className}`}
+        className={`flex w-full items-center gap-4 rounded-2xl border-2 border-dashed border-line bg-white/5 px-5 py-5 ${className}`}
       >
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-200 text-gray-400">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/10 text-muted">
           <Lock size={22} strokeWidth={2.5} />
         </div>
         <div className="flex-1 text-left">
-          <div className="text-base font-extrabold text-gray-400">{label}</div>
-          {subLabel && <div className="text-sm font-semibold text-gray-400">{subLabel}</div>}
+          <div className="text-base font-extrabold text-muted">{label}</div>
+          {subLabel && <div className="text-sm font-semibold text-muted">{subLabel}</div>}
         </div>
       </div>
     )

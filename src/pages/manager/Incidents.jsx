@@ -70,7 +70,7 @@ export default function Incidents() {
 
   const columns = [
     { key: 'date', header: 'Date', render: (i) => <span className="font-semibold">{formatDate(i.date)}</span> },
-    { key: 'type', header: 'Type', render: (i) => <span className="font-bold text-ink">{i.type}</span> },
+    { key: 'type', header: 'Type', render: (i) => <span className="font-bold text-white">{i.type}</span> },
     { key: 'severity', header: 'Severity', render: (i) => <Badge color={SEVERITY_COLOR[i.severity] || 'gray'}>{i.severity}</Badge> },
     { key: 'driver', header: 'Driver', render: (i) => driverName(i.driverId) },
     { key: 'vehicle', header: 'Vehicle', render: (i) => vehicleName(i.vehicleId) },
@@ -94,7 +94,7 @@ export default function Incidents() {
           key={s || 'all'}
           onClick={() => setStatusFilter(s)}
           className={`rounded-lg px-3 py-1.5 text-xs font-bold transition-colors ${
-            statusFilter === s ? 'bg-green text-white' : 'bg-white text-graytext hover:bg-gray-100'
+            statusFilter === s ? 'bg-green text-white' : 'bg-surface text-graytext hover:bg-white/5'
           }`}
         >
           {s ? INCIDENT_STATUS[s].label : 'All'}
@@ -166,7 +166,7 @@ export default function Incidents() {
 
             <div>
               <h3 className="mb-1.5 text-sm font-extrabold uppercase tracking-wide text-graytext">Description</h3>
-              <p className="rounded-xl bg-white p-4 text-sm leading-relaxed text-ink shadow-card">{selected.description}</p>
+              <p className="rounded-xl bg-surface p-4 text-sm leading-relaxed text-white shadow-card">{selected.description}</p>
             </div>
 
             {selected.photos?.length > 0 && (
@@ -176,7 +176,7 @@ export default function Incidents() {
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {selected.photos.map((src, i) => (
-                    <a key={i} href={src} target="_blank" rel="noreferrer" className="block h-24 w-24 overflow-hidden rounded-xl border border-black/10">
+                    <a key={i} href={src} target="_blank" rel="noreferrer" className="block h-24 w-24 overflow-hidden rounded-xl border border-line">
                       <img src={src} alt={`incident photo ${i + 1}`} className="h-full w-full object-cover transition-transform hover:scale-105" />
                     </a>
                   ))}
@@ -190,7 +190,7 @@ export default function Incidents() {
                 value={notesDraft}
                 onChange={(e) => setNotesDraft(e.target.value)}
                 rows={3}
-                className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
+                className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-white outline-none focus:border-green"
               />
               <Button className="mt-2" size="sm" onClick={saveNotes}>Save Notes</Button>
             </div>
@@ -207,8 +207,8 @@ export default function Incidents() {
                       onClick={() => setStatus(key)}
                       className={`flex-1 rounded-xl border-2 px-3 py-2 text-sm font-bold transition-colors ${
                         selected.status === key
-                          ? `${activeBorder} bg-gray-50 text-ink`
-                          : 'border-gray-200 text-graytext hover:bg-gray-50'
+                          ? `${activeBorder} bg-white/5 text-white`
+                          : 'border-line text-graytext hover:bg-white/5'
                       }`}
                     >
                       {m.label}
@@ -232,7 +232,7 @@ function Info({ label, value }) {
   return (
     <div>
       <div className="text-xs font-bold uppercase tracking-wide text-graytext">{label}</div>
-      <div className="font-extrabold text-ink">{value}</div>
+      <div className="font-extrabold text-white">{value}</div>
     </div>
   )
 }

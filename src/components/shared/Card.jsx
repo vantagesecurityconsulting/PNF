@@ -2,8 +2,8 @@
 export function Card({ children, className = '', padded = true, hover = false, ...props }) {
   return (
     <div
-      className={`rounded-2xl bg-white shadow-card border border-black/5
-        ${hover ? 'transition-shadow hover:shadow-card-hover cursor-pointer' : ''}
+      className={`rounded-xl bg-surface border border-line
+        ${hover ? 'transition-colors hover:border-brand/40 cursor-pointer' : ''}
         ${padded ? 'p-5' : ''} ${className}`}
       {...props}
     >

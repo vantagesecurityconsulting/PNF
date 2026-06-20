@@ -24,7 +24,7 @@ export function DriverAvatar({ driver, size = 'md', className = '' }) {
   return (
     <div
       className={`flex shrink-0 items-center justify-center rounded-full font-extrabold tracking-tight
-        ${onLeave ? 'bg-gray-200 text-graytext' : 'bg-green text-white'}
+        ${onLeave ? 'bg-white/10 text-graytext' : 'bg-green text-white'}
         ${SIZES[size]} ${className}`}
       title={driver?.name}
     >

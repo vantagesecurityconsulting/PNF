@@ -20,14 +20,14 @@ export function ToastHost() {
         return (
           <div
             key={t.id}
-            className={`pointer-events-auto flex w-full max-w-md animate-toast-in items-center gap-3 overflow-hidden rounded-xl border-l-4 ${meta.ring} bg-white px-4 py-3 shadow-card-hover`}
+            className={`pointer-events-auto flex w-full max-w-md animate-toast-in items-center gap-3 overflow-hidden rounded-xl border-l-4 ${meta.ring} bg-surface px-4 py-3 shadow-card-hover`}
             role="status"
           >
             <Icon size={20} className={meta.iconColor} strokeWidth={2.4} />
-            <span className="flex-1 text-sm font-semibold text-ink">{t.message}</span>
+            <span className="flex-1 text-sm font-semibold text-white">{t.message}</span>
             <button
               onClick={() => removeToast(t.id)}
-              className="text-graytext hover:text-ink"
+              className="text-graytext hover:text-white"
               aria-label="Dismiss"
             >
               <X size={16} />

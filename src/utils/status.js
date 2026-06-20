@@ -105,13 +105,13 @@ export const COLOR_CLASSES = {
   },
   gray: {
     text: 'text-graytext',
-    bg: 'bg-gray-200',
-    bgLight: 'bg-gray-100',
-    border: 'border-gray-300',
-    chipBg: 'bg-gray-100',
+    bg: 'bg-white/10',
+    bgLight: 'bg-white/5',
+    border: 'border-line',
+    chipBg: 'bg-white/5',
     chipText: 'text-graytext',
-    solidBg: 'bg-gray-400',
-    solidHover: 'hover:bg-gray-500',
+    solidBg: 'bg-white/20',
+    solidHover: 'hover:bg-white/50',
   },
 }
 

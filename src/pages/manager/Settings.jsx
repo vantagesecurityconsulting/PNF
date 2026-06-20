@@ -57,17 +57,17 @@ export default function Settings() {
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Location */}
         <Card padded>
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
             <MapPin size={18} className="text-green" /> Location — {activeLocation?.city || '—'}
           </h2>
           <div className="mt-4 space-y-4">
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-graytext">Location Name</label>
-              <input value={locName} onChange={(e) => setLocName(e.target.value)} className="h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green" />
+              <input value={locName} onChange={(e) => setLocName(e.target.value)} className="h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-green" />
             </div>
             <div>
               <label className="mb-1 block text-xs font-bold uppercase tracking-wide text-graytext">Airport Code</label>
-              <input value={locCode} onChange={(e) => setLocCode(e.target.value.toUpperCase())} maxLength={4} className="h-10 w-32 rounded-lg border border-gray-300 bg-white px-3 text-sm font-bold uppercase tracking-wider text-ink outline-none focus:border-green" />
+              <input value={locCode} onChange={(e) => setLocCode(e.target.value.toUpperCase())} maxLength={4} className="h-10 w-32 rounded-lg border border-line bg-surface px-3 text-sm font-bold uppercase tracking-wider text-white outline-none focus:border-green" />
             </div>
             <Button size="sm" icon={Save} onClick={saveLocation}>Save Location</Button>
             {isOwner && <p className="text-xs text-graytext">Manage all locations under Owner Admin → Locations.</p>}
@@ -76,13 +76,13 @@ export default function Settings() {
 
         {/* Notifications */}
         <Card padded>
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
             <Bell size={18} className="text-green" /> Notification Preferences
           </h2>
           <div className="mt-4 space-y-1">
             {Object.entries(NOTIFICATION_LABELS).map(([key, label]) => (
               <div key={key} className="flex items-center justify-between py-2">
-                <span className="text-sm font-semibold text-ink">{label}</span>
+                <span className="text-sm font-semibold text-white">{label}</span>
                 <Toggle checked={!!settings.notifications[key]} onChange={() => toggleNotification(key)} />
               </div>
             ))}
@@ -93,7 +93,7 @@ export default function Settings() {
       {/* Critical / auto-pull items */}
       <Card padded>
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
             <ShieldAlert size={18} className="text-danger" /> Unsafe Items — Auto-Pull from Service
           </h2>
           <span className="tabular text-sm font-bold text-graytext">{criticalItems.length} critical items</span>
@@ -106,15 +106,15 @@ export default function Settings() {
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           {inspectionGroups.map((group) => (
             <div key={group.key}>
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-extrabold text-ink">
+              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-extrabold text-white">
                 <span>{group.icon}</span> {group.label}
               </h3>
               <div className="space-y-1.5">
                 {group.items.map((item) => {
                   const isCritical = criticalItems.includes(item.key)
                   return (
-                    <div key={item.key} className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-3 py-2">
-                      <span className="flex items-center gap-1.5 text-sm font-semibold text-ink">
+                    <div key={item.key} className="flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2">
+                      <span className="flex items-center gap-1.5 text-sm font-semibold text-white">
                         {isCritical && <ShieldAlert size={13} className="text-danger" />}
                         {item.label}
                       </span>
@@ -131,7 +131,7 @@ export default function Settings() {
       {/* Inspection checklist manager */}
       <Card padded>
         <div className="flex items-center justify-between">
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
             <ListChecks size={18} className="text-green" /> Inspection Checklist
           </h2>
           <span className="tabular text-sm font-bold text-graytext">{activeCount} of {checklist.length} items active</span>
@@ -141,14 +141,14 @@ export default function Settings() {
         <div className="mt-4 grid gap-5 sm:grid-cols-2">
           {inspectionGroups.map((group) => (
             <div key={group.key}>
-              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-extrabold text-ink"><span>{group.icon}</span> {group.label}</h3>
+              <h3 className="mb-2 flex items-center gap-1.5 text-sm font-extrabold text-white"><span>{group.icon}</span> {group.label}</h3>
               <div className="space-y-1.5">
                 {group.items.map((item) => {
                   const cfg = checklist.find((c) => c.key === item.key)
                   const active = cfg?.active ?? true
                   return (
-                    <div key={item.key} className="flex items-center justify-between rounded-lg border border-black/5 bg-white px-3 py-2">
-                      <span className={`text-sm font-semibold ${active ? 'text-ink' : 'text-gray-400 line-through'}`}>{item.label}</span>
+                    <div key={item.key} className="flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2">
+                      <span className={`text-sm font-semibold ${active ? 'text-white' : 'text-muted line-through'}`}>{item.label}</span>
                       <Toggle checked={active} onChange={() => toggleChecklistItem(item.key)} />
                     </div>
                   )
@@ -160,14 +160,14 @@ export default function Settings() {
       </Card>
 
       {/* Airtable placeholder */}
-      <Card padded className="border-dashed border-2 border-gray-200 bg-gray-50/60">
+      <Card padded className="border-dashed border-2 border-line bg-white/5">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white shadow-card">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-surface shadow-card">
               <Database size={24} className="text-graytext" />
             </div>
             <div>
-              <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+              <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
                 Airtable Integration
                 <span className="rounded-full bg-amber/15 px-2 py-0.5 text-xs font-bold text-amber">Coming Soon</span>
               </h2>
@@ -185,7 +185,7 @@ export default function Settings() {
       {/* Owner: reset system */}
       {isOwner && (
         <Card padded className="border-danger/20">
-          <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+          <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
             <RotateCcw size={18} className="text-danger" /> Reset System Data
           </h2>
           <p className="mt-1 text-sm text-graytext">
@@ -198,9 +198,9 @@ export default function Settings() {
         </Card>
       )}
 
-      <div className="flex items-center justify-center gap-2 pb-2 text-xs text-graytext">
+      <div className="flex items-center justify-center gap-2 pb-2 text-[11px] text-muted">
         <ParkNFlyMark size={18} />
-        ShuttleLog v1.0 Concept · Built for Park'N Fly · June 2026
+        Park N Fly · Powered by Drivex — Built to run. Priced to grow.
       </div>
 
       <Modal
@@ -229,9 +229,9 @@ function Toggle({ checked, onChange, danger }) {
       role="switch"
       aria-checked={checked}
       onClick={onChange}
-      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? onColor : 'bg-gray-300'}`}
+      className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${checked ? onColor : 'bg-white/15'}`}
     >
-      <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-surface shadow transition-transform ${checked ? 'translate-x-[22px]' : 'translate-x-0.5'}`} />
     </button>
   )
 }

@@ -16,12 +16,12 @@ export function DataTable({
   rowKey = (row, i) => row.id ?? i,
 }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-black/5 bg-white shadow-card">
-      {filters && <div className="border-b border-black/5 bg-offwhite/60 px-4 py-3">{filters}</div>}
+    <div className="overflow-hidden rounded-2xl border border-line bg-surface shadow-card">
+      {filters && <div className="border-b border-line bg-offwhite/60 px-4 py-3">{filters}</div>}
       <div className="overflow-x-auto">
         <table className="w-full min-w-[640px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-black/5">
+            <tr className="border-b border-line">
               {columns.map((col) => (
                 <th
                   key={col.key}
@@ -44,7 +44,7 @@ export function DataTable({
               <tr
                 key={rowKey(row, i)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={`border-b border-black/5 last:border-0 transition-colors ${
+                className={`border-b border-line last:border-0 transition-colors ${
                   onRowClick ? 'cursor-pointer hover:bg-green-light/40' : ''
                 }`}
               >

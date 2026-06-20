@@ -67,10 +67,10 @@ export function SearchPalette({ open, onClose }) {
   return (
     <div className="fixed inset-0 z-[55] flex items-start justify-center px-4 pt-[12vh]">
       <div className="absolute inset-0 bg-ink/40 animate-fade-in" onClick={onClose} aria-hidden />
-      <div className="relative w-full max-w-lg animate-fade-in overflow-hidden rounded-2xl bg-white shadow-card-hover">
+      <div className="relative w-full max-w-lg animate-fade-in overflow-hidden rounded-2xl bg-surface shadow-card-hover">
         <form
           onSubmit={(e) => { e.preventDefault(); if (results[0]) go(results[0].to) }}
-          className="flex items-center gap-3 border-b border-black/5 px-4 py-3"
+          className="flex items-center gap-3 border-b border-line px-4 py-3"
         >
           <Search size={18} className="text-graytext" />
           <input
@@ -78,9 +78,9 @@ export function SearchPalette({ open, onClose }) {
             value={q}
             onChange={(e) => setQ(e.target.value)}
             placeholder="Search staff, vehicles, incidents…"
-            className="flex-1 bg-transparent text-sm font-semibold text-ink outline-none placeholder:text-graytext"
+            className="flex-1 bg-transparent text-sm font-semibold text-white outline-none placeholder:text-graytext"
           />
-          <kbd className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold text-graytext">ESC</kbd>
+          <kbd className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-bold text-graytext">ESC</kbd>
         </form>
 
         <div className="max-h-[50vh] overflow-y-auto">
@@ -93,11 +93,11 @@ export function SearchPalette({ open, onClose }) {
               <button
                 key={r.id}
                 onClick={() => go(r.to)}
-                className="flex w-full items-center gap-3 border-b border-black/5 px-4 py-2.5 text-left last:border-0 hover:bg-green-light/40"
+                className="flex w-full items-center gap-3 border-b border-line px-4 py-2.5 text-left last:border-0 hover:bg-green-light/40"
               >
                 <r.icon size={18} className="shrink-0 text-graytext" />
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-bold text-ink">{r.label}</div>
+                  <div className="truncate text-sm font-bold text-white">{r.label}</div>
                   <div className="truncate text-xs text-graytext">{r.sub}</div>
                 </div>
                 {i === 0 && <CornerDownLeft size={14} className="text-graytext" />}

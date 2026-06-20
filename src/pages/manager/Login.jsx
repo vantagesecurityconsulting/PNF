@@ -36,8 +36,8 @@ export default function Login() {
           <Logo size={44} dark />
         </div>
 
-        <form onSubmit={submit} className="rounded-2xl bg-white p-6 shadow-card-hover">
-          <h1 className="text-xl font-black tracking-tight text-ink">Manager Sign In</h1>
+        <form onSubmit={submit} className="rounded-2xl bg-surface p-6 shadow-card-hover">
+          <h1 className="text-xl font-black tracking-tight text-white">Manager Sign In</h1>
           <p className="mt-1 text-sm text-graytext">Sign in to access the operations dashboard.</p>
 
           <div className="mt-5 space-y-3">
@@ -48,7 +48,7 @@ export default function Login() {
                 value={email}
                 onChange={(e) => { setEmail(e.target.value); setError('') }}
                 placeholder="you@parknfly.ca"
-                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold text-ink outline-none focus:border-green"
+                className="h-11 w-full rounded-xl border border-line bg-surface px-4 font-semibold text-white outline-none focus:border-green"
                 autoComplete="username"
               />
             </div>
@@ -59,7 +59,7 @@ export default function Login() {
                 value={password}
                 onChange={(e) => { setPassword(e.target.value); setError('') }}
                 placeholder="••••••••"
-                className="h-11 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold text-ink outline-none focus:border-green"
+                className="h-11 w-full rounded-xl border border-line bg-surface px-4 font-semibold text-white outline-none focus:border-green"
                 autoComplete="current-password"
               />
             </div>
@@ -86,9 +86,9 @@ export default function Login() {
                   key={c.email}
                   type="button"
                   onClick={() => quickFill(c)}
-                  className="flex w-full items-center justify-between rounded-lg bg-white px-3 py-2 text-left text-xs hover:bg-green-light"
+                  className="flex w-full items-center justify-between rounded-lg bg-surface px-3 py-2 text-left text-xs hover:bg-green-light"
                 >
-                  <span className="font-bold text-ink">{c.label}</span>
+                  <span className="font-bold text-white">{c.label}</span>
                   <span className="tabular text-graytext">{c.email} · {c.password}</span>
                 </button>
               ))}
@@ -101,10 +101,11 @@ export default function Login() {
         </form>
 
         <div className="mt-4 text-center">
-          <Link to="/driver" className="inline-flex items-center gap-1.5 text-sm font-bold text-gray-400 hover:text-white">
+          <Link to="/driver" className="inline-flex items-center gap-1.5 text-sm font-bold text-muted hover:text-white">
             <Tablet size={15} /> Switch to Driver View
           </Link>
         </div>
+        <p className="mt-4 text-center text-[11px] text-muted">Powered by Drivex</p>
       </div>
     </div>
   )

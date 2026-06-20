@@ -8,11 +8,11 @@ export function ProgressBar({ value = 0, max = 100, label, showPct = true, color
     <div className={className}>
       {(label || showPct) && (
         <div className="mb-1.5 flex items-center justify-between text-sm">
-          {label && <span className="font-semibold text-ink">{label}</span>}
+          {label && <span className="font-semibold text-white">{label}</span>}
           {showPct && <span className="tabular font-bold text-graytext">{pct}%</span>}
         </div>
       )}
-      <div className="h-2.5 w-full overflow-hidden rounded-full bg-gray-200">
+      <div className="h-2.5 w-full overflow-hidden rounded-full bg-white/10">
         <div
           className={`h-full rounded-full ${barColor} transition-all duration-500 ease-out`}
           style={{ width: `${pct}%` }}

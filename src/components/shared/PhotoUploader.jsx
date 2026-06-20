@@ -26,7 +26,7 @@ export function PhotoUploader({ value = [], onChange, max = 6, label = 'Add Phot
     <div>
       <div className="flex flex-wrap gap-2">
         {value.map((src, i) => (
-          <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl border border-black/10">
+          <div key={i} className="relative h-20 w-20 overflow-hidden rounded-xl border border-line">
             <img src={src} alt={`attachment ${i + 1}`} className="h-full w-full object-cover" />
             <button
               type="button"
@@ -44,7 +44,7 @@ export function PhotoUploader({ value = [], onChange, max = 6, label = 'Add Phot
             type="button"
             onClick={() => inputRef.current?.click()}
             disabled={busy}
-            className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-gray-300 text-graytext transition-colors hover:border-green hover:text-green ${
+            className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 border-dashed border-line text-graytext transition-colors hover:border-green hover:text-green ${
               compact ? 'h-20 w-20' : 'h-20 w-24'
             }`}
           >

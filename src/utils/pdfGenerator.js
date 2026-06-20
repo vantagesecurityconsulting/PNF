@@ -18,44 +18,46 @@ import {
   minutesBetween,
 } from './formatters'
 
-// Brand palette (RGB)
-const GREEN = [63, 174, 41]
-const GREEN_DARK = [45, 140, 30]
+// Drivex palette (RGB)
+const GREEN = [232, 80, 10] // brand orange (accent) — name kept for minimal churn
+const GREEN_DARK = [200, 67, 8]
+const BRAND2 = [255, 107, 43]
+const SUCCESS = [29, 158, 117]
 const BLACK = [17, 17, 17]
 const WHITE = [255, 255, 255]
-const RED = [208, 2, 27]
-const GRAY = [107, 107, 107]
-const LIGHT = [232, 247, 229]
+const RED = [226, 75, 74]
+const GRAY = [136, 136, 136]
+const LIGHT = [253, 235, 228] // light orange tint
 
 const PAGE = { w: 210, h: 297, margin: 14 }
 
 // ---- Shared chrome --------------------------------------------------------
 
-/** Draws the Park'N Fly mark (vector recreation) at x,y with given size. */
+/** Draws the Drivex chevron mark at x,y within a `size` box. */
 function drawLogoMark(doc, x, y, size) {
-  // green rounded square
-  doc.setFillColor(...GREEN)
-  doc.roundedRect(x, y, size, size, size * 0.16, size * 0.16, 'F')
-  // white car body
-  doc.setFillColor(...WHITE)
-  const cx = x + size * 0.16
-  const cy = y + size * 0.5
-  const cw = size * 0.62
-  const ch = size * 0.26
-  doc.roundedRect(cx, cy, cw, ch, ch * 0.4, ch * 0.4, 'F')
-  doc.roundedRect(cx + cw * 0.18, cy - ch * 0.55, cw * 0.5, ch * 0.7, ch * 0.3, ch * 0.3, 'F')
-  // wheels
-  doc.setFillColor(...BLACK)
-  doc.circle(cx + cw * 0.25, cy + ch, size * 0.05, 'F')
-  doc.circle(cx + cw * 0.72, cy + ch, size * 0.05, 'F')
-  // black airplane (triangle)
-  doc.setFillColor(...BLACK)
-  doc.triangle(
-    x + size * 0.52, y + size * 0.2,
-    x + size * 0.86, y + size * 0.32,
-    x + size * 0.56, y + size * 0.36,
-    'F',
-  )
+  const drawChevron = (ox, color, alpha) => {
+    doc.setDrawColor(...color)
+    doc.setLineWidth(size * 0.12)
+    if (doc.setLineCap) doc.setLineCap('round')
+    if (doc.setLineJoin) doc.setLineJoin('round')
+    if (doc.saveGraphicsState && doc.GState) {
+      doc.saveGraphicsState()
+      doc.setGState(new doc.GState({ stroke: alpha }))
+    }
+    const x0 = x + ox
+    doc.lines(
+      [
+        [size * 0.26, size * 0.24],
+        [-size * 0.26, size * 0.24],
+      ],
+      x0,
+      y + size * 0.26,
+    )
+    if (doc.restoreGraphicsState && doc.GState) doc.restoreGraphicsState()
+  }
+  drawChevron(size * 0.18, GREEN, 1)
+  drawChevron(size * 0.42, BRAND2, 0.6)
+  doc.setLineWidth(0.2)
 }
 
 /** Black header band + green accent strip. Returns y below the header. */
@@ -102,7 +104,7 @@ function drawFooters(doc) {
     doc.text('Park\'N Fly Halifax — Confidential', PAGE.margin, PAGE.h - 7)
     doc.text(`Page ${i} of ${pages}`, PAGE.w - PAGE.margin, PAGE.h - 7, { align: 'right' })
     doc.setTextColor(...GREEN_DARK)
-    doc.text('ShuttleLog', PAGE.w / 2, PAGE.h - 7, { align: 'center' })
+    doc.text('Drivex', PAGE.w / 2, PAGE.h - 7, { align: 'center' })
   }
 }
 
@@ -271,7 +273,7 @@ export function generateShiftReport({ shift, inspection, driver, vehicle }) {
           if (v === 'FAIL') {
             data.cell.styles.textColor = RED
           } else if (v === 'PASS') {
-            data.cell.styles.textColor = GREEN_DARK
+            data.cell.styles.textColor = SUCCESS
           }
         }
       },
@@ -404,7 +406,7 @@ export function generateInspectionReport({ inspection, driver, vehicle, shift })
       if (data.section === 'body' && data.column.index === 2) {
         const v = data.cell.raw
         if (v === 'FAIL') data.cell.styles.textColor = RED
-        else if (v === 'PASS') data.cell.styles.textColor = GREEN_DARK
+        else if (v === 'PASS') data.cell.styles.textColor = SUCCESS
       }
     },
   })

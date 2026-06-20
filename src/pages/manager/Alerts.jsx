@@ -63,12 +63,12 @@ export default function Alerts() {
               const sev = SEV[a.severity]
               return (
                 <Card key={a.id} padded hover onClick={() => navigate(a.link)} className="flex items-center gap-4">
-                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${a.severity === 'high' ? 'bg-danger/10 text-danger' : a.severity === 'medium' ? 'bg-amber/10 text-amber' : 'bg-gray-100 text-graytext'}`}>
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${a.severity === 'high' ? 'bg-danger/10 text-danger' : a.severity === 'medium' ? 'bg-amber/10 text-amber' : 'bg-white/5 text-graytext'}`}>
                     <Icon size={20} strokeWidth={2.3} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate font-extrabold text-ink">{a.title}</span>
+                      <span className="truncate font-extrabold text-white">{a.title}</span>
                       <Badge color={sev.color}>{a.category}</Badge>
                     </div>
                     <div className="truncate text-sm text-graytext">{a.detail}</div>

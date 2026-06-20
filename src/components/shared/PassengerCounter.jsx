@@ -17,7 +17,7 @@ export function PassengerCounter({ value = 0, onChange, min = 0, max = 20, label
           onClick={dec}
           disabled={disabled || value <= min}
           aria-label="Decrease passengers"
-          className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-gray-300 bg-white text-ink transition-all hover:border-green hover:bg-green-light active:scale-95 disabled:opacity-30 disabled:hover:border-gray-300 disabled:hover:bg-white"
+          className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-line bg-surface text-white transition-all hover:border-green hover:bg-green-light active:scale-95 disabled:opacity-30 disabled:hover:border-line disabled:hover:bg-surface"
         >
           <Minus size={28} strokeWidth={3} />
         </button>
@@ -28,7 +28,7 @@ export function PassengerCounter({ value = 0, onChange, min = 0, max = 20, label
           onClick={inc}
           disabled={disabled || value >= max}
           aria-label="Increase passengers"
-          className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-gray-300 bg-white text-ink transition-all hover:border-green hover:bg-green-light active:scale-95 disabled:opacity-30 disabled:hover:border-gray-300 disabled:hover:bg-white"
+          className="flex h-16 w-16 items-center justify-center rounded-2xl border-2 border-line bg-surface text-white transition-all hover:border-green hover:bg-green-light active:scale-95 disabled:opacity-30 disabled:hover:border-line disabled:hover:bg-surface"
         >
           <Plus size={28} strokeWidth={3} />
         </button>

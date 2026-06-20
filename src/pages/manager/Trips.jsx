@@ -122,7 +122,7 @@ export default function Trips() {
   ]
 
   const selectCls =
-    'h-9 rounded-lg border border-gray-300 bg-white px-2.5 text-sm font-semibold text-ink outline-none focus:border-green'
+    'h-9 rounded-lg border border-line bg-surface px-2.5 text-sm font-semibold text-white outline-none focus:border-green'
 
   const filters = (
     <div className="flex flex-wrap items-center gap-2">
@@ -134,7 +134,7 @@ export default function Trips() {
           <button
             key={p.l}
             onClick={() => setPreset(p.d)}
-            className="rounded-lg bg-white px-2.5 py-1.5 text-xs font-bold text-graytext hover:bg-green-light hover:text-green-dark"
+            className="rounded-lg bg-surface px-2.5 py-1.5 text-xs font-bold text-graytext hover:bg-green-light hover:text-green-dark"
           >
             {p.l}
           </button>
@@ -224,7 +224,7 @@ export default function Trips() {
               </span>
             </div>
 
-            <div className="overflow-hidden rounded-2xl border border-black/5 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-line bg-surface">
               <Timeline label="Departed parking lot" time={selected.departLotTime} color="green" />
               <Timeline label="Arrived at airport" time={selected.arriveAirportTime} color="amber" />
               <Timeline label="Departed airport" time={selected.departAirportTime} color="info" />
@@ -245,9 +245,9 @@ export default function Trips() {
 function Timeline({ label, time, color, last }) {
   const dot = color === 'green' ? 'bg-green' : color === 'amber' ? 'bg-amber' : 'bg-info'
   return (
-    <div className={`flex items-center gap-3 px-4 py-3 ${last ? '' : 'border-b border-black/5'}`}>
+    <div className={`flex items-center gap-3 px-4 py-3 ${last ? '' : 'border-b border-line'}`}>
       <span className={`h-2.5 w-2.5 rounded-full ${dot}`} />
-      <span className="flex-1 text-sm font-semibold text-ink">{label}</span>
+      <span className="flex-1 text-sm font-semibold text-white">{label}</span>
       <span className="tabular text-sm font-bold text-graytext">{formatTime(time)}</span>
     </div>
   )

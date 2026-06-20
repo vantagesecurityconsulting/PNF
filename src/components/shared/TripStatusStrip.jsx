@@ -34,7 +34,7 @@ export function TripStatusStrip({ step = 1, tripNum = 1 }) {
           {[1, 2, 3, 4].map((n) => (
             <span
               key={n}
-              className={`h-1.5 w-6 rounded-full ${n <= step ? 'bg-white' : 'bg-white/30'}`}
+              className={`h-1.5 w-6 rounded-full ${n <= step ? 'bg-surface' : 'bg-white/30'}`}
             />
           ))}
         </div>

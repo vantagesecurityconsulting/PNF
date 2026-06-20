@@ -21,13 +21,13 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative w-full ${widths[size]} animate-fade-in rounded-2xl bg-white shadow-card-hover`}
+        className={`relative w-full ${widths[size]} animate-fade-in rounded-xl border border-line bg-surface`}
       >
-        <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-          <h2 className="text-lg font-extrabold tracking-tight text-ink">{title}</h2>
+        <div className="flex items-center justify-between border-b border-line px-5 py-4">
+          <h2 className="text-lg font-extrabold tracking-tight text-white">{title}</h2>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg text-graytext hover:bg-gray-100"
+            className="flex h-8 w-8 items-center justify-center rounded-lg text-graytext hover:bg-white/5"
             aria-label="Close"
           >
             <X size={18} />
@@ -35,7 +35,7 @@ export function Modal({ open, onClose, title, children, footer, size = 'md' }) {
         </div>
         <div className="px-5 py-4">{children}</div>
         {footer && (
-          <div className="flex justify-end gap-2 border-t border-black/5 px-5 py-4">{footer}</div>
+          <div className="flex justify-end gap-2 border-t border-line px-5 py-4">{footer}</div>
         )}
       </div>
     </div>

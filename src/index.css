@@ -3,16 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --green: #3fae29;
-  --green-dark: #2d8c1e;
-  --green-light: #e8f7e5;
-  --black: #111111;
+  /* Drivex palette */
+  --brand: #e8500a;
+  --brand-light: #ff6b2b;
+  --base: #111111;
+  --surface: #1a1a1a;
+  --line: #2a2a2a;
   --white: #ffffff;
-  --offwhite: #f5f5f3;
-  --gray: #6b6b6b;
-  --amber: #f5a623;
-  --red: #d0021b;
-  --blue: #1976d2;
+  --muted: #888888;
+  --success: #1d9e75;
+  --amber: #ef9f27;
+  --danger: #e24b4a;
+  --info: #1976d2;
 }
 
 * {
@@ -28,11 +30,22 @@ body,
 body {
   margin: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-color: var(--offwhite);
-  color: var(--black);
+  background-color: var(--base);
+  color: var(--white);
+  font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+}
+
+/* Brand typography: tighter, lighter headings */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  letter-spacing: -0.5px;
 }
 
 /* Numbers and data should use tabular figures */
@@ -40,14 +53,21 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
+/* Uppercase label treatment per brand */
+.brand-label {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-weight: 400;
+}
+
 /* Consistent focus ring for keyboard accessibility */
 :focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--brand);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Custom scrollbar for desktop dashboard */
+/* Dark custom scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -56,12 +76,12 @@ body {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: #d4d4d1;
+  background: #2a2a2a;
   border-radius: 6px;
-  border: 2px solid var(--offwhite);
+  border: 2px solid var(--base);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #b8b8b4;
+  background: #3a3a3a;
 }
 
 @layer utilities {

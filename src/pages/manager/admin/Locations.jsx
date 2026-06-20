@@ -34,7 +34,7 @@ export default function Locations() {
     setErr('')
   }
 
-  const inputCls = 'h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green'
+  const inputCls = 'h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-green'
 
   return (
     <div className="space-y-6">
@@ -57,14 +57,14 @@ export default function Locations() {
                     <MapPin size={20} />
                   </div>
                   <div>
-                    <div className="text-base font-extrabold text-ink">{loc.city}</div>
+                    <div className="text-base font-extrabold text-white">{loc.city}</div>
                     <div className="text-xs font-semibold text-graytext">{loc.name}</div>
                   </div>
                 </div>
                 <Badge color={loc.active ? 'green' : 'gray'} dot>{loc.active ? 'Active' : 'Inactive'}</Badge>
               </div>
 
-              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-black/5 pt-3 text-center">
+              <div className="mt-4 grid grid-cols-3 gap-2 border-t border-line pt-3 text-center">
                 <Stat label="Code" value={loc.code} />
                 <Stat label="Vehicles" value={vCount} />
                 <Stat label="Staff" value={sCount} />
@@ -111,7 +111,7 @@ export default function Locations() {
 function Stat({ label, value }) {
   return (
     <div>
-      <div className="tabular text-base font-black text-ink">{value}</div>
+      <div className="tabular text-base font-black text-white">{value}</div>
       <div className="text-[10px] font-bold uppercase tracking-wide text-graytext">{label}</div>
     </div>
   )

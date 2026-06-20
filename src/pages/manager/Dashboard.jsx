@@ -177,7 +177,7 @@ export default function Dashboard() {
           <Card padded>
             <div className="mb-4 flex items-center gap-2">
               <TrendingUp size={18} className="text-green" />
-              <h2 className="text-base font-extrabold text-ink">Trips Completed by Hour</h2>
+              <h2 className="text-base font-extrabold text-white">Trips Completed by Hour</h2>
             </div>
             <ResponsiveContainer width="100%" height={280}>
               <LineChart data={trend} margin={{ top: 5, right: 8, left: -18, bottom: 0 }}>
@@ -200,7 +200,7 @@ export default function Dashboard() {
           <Card padded>
             <div className="mb-3 flex items-center gap-2">
               <Timer size={18} className="text-green" />
-              <h2 className="text-base font-extrabold text-ink">Operations Timing</h2>
+              <h2 className="text-base font-extrabold text-white">Operations Timing</h2>
               <span className="text-xs font-semibold text-graytext">last 7 days avg</span>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
@@ -220,8 +220,8 @@ export default function Dashboard() {
         <div className="space-y-6">
           {/* Alerts */}
           <Card padded={false}>
-            <div className="flex items-center justify-between border-b border-black/5 px-5 py-4">
-              <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+            <div className="flex items-center justify-between border-b border-line px-5 py-4">
+              <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
                 <Bell size={18} className={alerts.length ? 'text-danger' : 'text-green'} /> Alerts
                 {alerts.length > 0 && (
                   <span className="tabular flex h-5 min-w-[20px] items-center justify-center rounded-full bg-danger px-1.5 text-[11px] font-bold text-white">
@@ -240,11 +240,11 @@ export default function Dashboard() {
                 <button
                   key={a.id}
                   onClick={() => navigate(a.link)}
-                  className="flex w-full items-center gap-3 border-b border-black/5 px-5 py-3 text-left last:border-0 hover:bg-gray-50"
+                  className="flex w-full items-center gap-3 border-b border-line px-5 py-3 text-left last:border-0 hover:bg-white/5"
                 >
-                  <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${a.severity === 'high' ? 'bg-danger' : a.severity === 'medium' ? 'bg-amber' : 'bg-gray-400'}`} />
+                  <span className={`mt-0.5 h-2 w-2 shrink-0 rounded-full ${a.severity === 'high' ? 'bg-danger' : a.severity === 'medium' ? 'bg-amber' : 'bg-white/20'}`} />
                   <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-bold text-ink">{a.title}</div>
+                    <div className="truncate text-sm font-bold text-white">{a.title}</div>
                     <div className="truncate text-xs text-graytext">{a.detail}</div>
                   </div>
                 </button>
@@ -254,7 +254,7 @@ export default function Dashboard() {
 
           {/* Quick actions */}
           <Card padded>
-            <h2 className="mb-3 text-base font-extrabold text-ink">Quick Actions</h2>
+            <h2 className="mb-3 text-base font-extrabold text-white">Quick Actions</h2>
             <div className="space-y-2">
               <Button variant="secondary" fullWidth icon={FileText} onClick={generateTodayReport}>
                 Generate Today's Report
@@ -280,8 +280,8 @@ export default function Dashboard() {
 
           {/* Activity feed */}
           <Card padded={false}>
-            <div className="border-b border-black/5 px-5 py-4">
-              <h2 className="text-base font-extrabold text-ink">Recent Activity</h2>
+            <div className="border-b border-line px-5 py-4">
+              <h2 className="text-base font-extrabold text-white">Recent Activity</h2>
               <p className="text-xs text-graytext">Today's trip events</p>
             </div>
             <div className="max-h-[480px] overflow-y-auto">
@@ -291,10 +291,10 @@ export default function Dashboard() {
                 feed.map((e, i) => {
                   const c = colorClass(e.color)
                   return (
-                    <div key={i} className="flex items-start gap-3 border-b border-black/5 px-5 py-3 last:border-0">
+                    <div key={i} className="flex items-start gap-3 border-b border-line px-5 py-3 last:border-0">
                       <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${c.solidBg}`} />
                       <div className="min-w-0 flex-1">
-                        <div className="text-sm font-bold text-ink">{e.type}</div>
+                        <div className="text-sm font-bold text-white">{e.type}</div>
                         <div className="text-xs text-graytext">
                           {e.driver} · {e.vehicle} · Trip {e.tripNum} · {e.pax} pax
                         </div>
@@ -335,7 +335,7 @@ export default function Dashboard() {
             <label
               key={v.id}
               className={`flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 ${
-                flagVehicleId === v.id ? 'border-danger bg-danger/5' : 'border-gray-200 hover:bg-gray-50'
+                flagVehicleId === v.id ? 'border-danger bg-danger/5' : 'border-line hover:bg-white/5'
               }`}
             >
               <div className="flex items-center gap-3">
@@ -346,7 +346,7 @@ export default function Dashboard() {
                   onChange={() => setFlagVehicleId(v.id)}
                   className="accent-danger"
                 />
-                <span className="font-bold text-ink">{v.busNum}</span>
+                <span className="font-bold text-white">{v.busNum}</span>
                 <span className="text-sm text-graytext">
                   {v.make} {v.model}
                 </span>
@@ -365,7 +365,7 @@ export default function Dashboard() {
 function TimingStat({ label, value }) {
   return (
     <div className="rounded-xl bg-offwhite px-3 py-2.5 text-center">
-      <div className="tabular text-lg font-black text-ink">{value != null ? formatMinutes(value) : '—'}</div>
+      <div className="tabular text-lg font-black text-white">{value != null ? formatMinutes(value) : '—'}</div>
       <div className="text-[11px] font-bold uppercase tracking-wide text-graytext">{label}</div>
     </div>
   )

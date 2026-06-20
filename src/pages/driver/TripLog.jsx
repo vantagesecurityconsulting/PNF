@@ -160,7 +160,7 @@ export default function TripLog() {
 
         {/* Passengers to airport — shown before/at airport arrival */}
         {step <= 2 && (
-          <Card className="bg-white">
+          <Card className="bg-surface">
             <PassengerCounter
               label="Passengers to Airport"
               value={currentTrip.paxToAirport}
@@ -206,7 +206,7 @@ export default function TripLog() {
 
         {/* Passengers from airport — shown at step 3 */}
         {step === 3 && (
-          <Card className="bg-white">
+          <Card className="bg-surface">
             <PassengerCounter
               label="Passengers from Airport"
               value={currentTrip.paxFromAirport}
@@ -290,13 +290,13 @@ export default function TripLog() {
 function TimeEditRow({ label, field, value, onChange }) {
   return (
     <div className="flex items-center justify-between gap-3">
-      <span className="text-sm font-semibold text-ink">{label}</span>
+      <span className="text-sm font-semibold text-white">{label}</span>
       <input
         type="time"
         value={toTimeInput(value)}
         disabled={!value}
         onChange={(e) => onChange(field, e.target.value)}
-        className="tabular h-10 rounded-lg border border-gray-300 bg-white px-3 font-semibold text-ink outline-none focus:border-green disabled:bg-gray-50 disabled:text-gray-400"
+        className="tabular h-10 rounded-lg border border-line bg-surface px-3 font-semibold text-white outline-none focus:border-green disabled:bg-white/5 disabled:text-muted"
       />
     </div>
   )
@@ -304,9 +304,9 @@ function TimeEditRow({ label, field, value, onChange }) {
 
 function MiniStat({ label, value }) {
   return (
-    <div className="rounded-2xl bg-white px-4 py-3 shadow-card">
+    <div className="rounded-2xl bg-surface px-4 py-3 shadow-card">
       <div className="text-xs font-bold uppercase tracking-wide text-graytext">{label}</div>
-      <div className="tabular text-2xl font-black text-ink">{value}</div>
+      <div className="tabular text-2xl font-black text-white">{value}</div>
     </div>
   )
 }
@@ -315,7 +315,7 @@ function SummaryRow({ label, value }) {
   return (
     <div className="flex items-center justify-between">
       <span className="text-graytext">{label}</span>
-      <span className="tabular font-bold text-ink">{value}</span>
+      <span className="tabular font-bold text-white">{value}</span>
     </div>
   )
 }

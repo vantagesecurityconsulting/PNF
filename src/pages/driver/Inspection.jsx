@@ -52,7 +52,7 @@ export default function Inspection() {
       <div className="mx-auto max-w-xl">
         <Card className="text-center">
           <AlertTriangle className="mx-auto text-amber" size={28} />
-          <p className="mt-2 font-semibold text-ink">Start a shift to run an inspection.</p>
+          <p className="mt-2 font-semibold text-white">Start a shift to run an inspection.</p>
           <Button className="mt-4" onClick={() => navigate('/driver')}>
             Go to Shift Start
           </Button>
@@ -89,7 +89,7 @@ export default function Inspection() {
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-ink">Pre-Trip Inspection</h1>
+          <h1 className="text-2xl font-black tracking-tight text-white">Pre-Trip Inspection</h1>
           <p className="text-sm text-graytext">
             {checkedCount} of {allItems.length} items checked
           </p>
@@ -117,7 +117,7 @@ export default function Inspection() {
         return (
           <Card key={group.key} padded className="space-y-2.5">
             <div className="mb-1 flex items-center justify-between">
-              <h2 className="flex items-center gap-2 text-base font-extrabold text-ink">
+              <h2 className="flex items-center gap-2 text-base font-extrabold text-white">
                 <span className="text-lg">{group.icon}</span> {group.label}
               </h2>
               <span className="tabular text-xs font-bold text-graytext">
@@ -140,14 +140,14 @@ export default function Inspection() {
       {/* Fuel + notes + signature */}
       <Card padded className="space-y-5">
         <div>
-          <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-ink">
+          <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-white">
             <Fuel size={15} className="text-graytext" /> Fuel Level
           </label>
           <div className="relative">
             <select
               value={fuelLevel}
               onChange={(e) => setFuelLevel(e.target.value)}
-              className="h-12 w-full appearance-none rounded-xl border border-gray-300 bg-white px-4 pr-10 font-semibold text-ink outline-none focus:border-green"
+              className="h-12 w-full appearance-none rounded-xl border border-line bg-surface px-4 pr-10 font-semibold text-white outline-none focus:border-green"
             >
               <option value="">Select fuel level…</option>
               {fuelLevels.map((f) => (
@@ -161,23 +161,23 @@ export default function Inspection() {
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-ink">Overall Condition Notes</label>
+          <label className="mb-1.5 block text-sm font-bold text-white">Overall Condition Notes</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={3}
             placeholder="Note any defects, observations, or items needing follow-up…"
-            className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
+            className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-white outline-none focus:border-green"
           />
         </div>
 
         <div>
-          <label className="mb-1.5 block text-sm font-bold text-ink">Defect / Condition Photos (optional)</label>
+          <label className="mb-1.5 block text-sm font-bold text-white">Defect / Condition Photos (optional)</label>
           <PhotoUploader value={photos} onChange={setPhotos} max={6} label="Add Photo" />
         </div>
 
         <div>
-          <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-ink">
+          <label className="mb-1.5 flex items-center gap-1.5 text-sm font-bold text-white">
             <PenLine size={15} className="text-graytext" /> Driver Signature (type your name)
           </label>
           <input
@@ -185,7 +185,7 @@ export default function Inspection() {
             value={signature}
             onChange={(e) => setSignature(e.target.value)}
             placeholder={driver?.name || 'Type your full name'}
-            className="h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold italic text-ink outline-none focus:border-green"
+            className="h-12 w-full rounded-xl border border-line bg-surface px-4 font-semibold italic text-white outline-none focus:border-green"
             style={{ fontFamily: 'Georgia, serif' }}
           />
         </div>

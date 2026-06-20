@@ -81,7 +81,7 @@ export default function Fleet() {
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-green-light text-green-dark">
             <Bus size={16} />
           </div>
-          <span className="font-extrabold text-ink">{v.busNum}</span>
+          <span className="font-extrabold text-white">{v.busNum}</span>
         </div>
       ),
     },
@@ -107,7 +107,7 @@ export default function Fleet() {
     { key: 'nextServiceDue', header: 'Next Service', render: (v) => formatDate(v.nextServiceDue) },
   ]
 
-  const inputCls = 'h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green'
+  const inputCls = 'h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-green'
 
   const exportCsv = () => {
     downloadCSV('shuttlelog-fleet', vehicles, [
@@ -219,16 +219,16 @@ export default function Fleet() {
                 <MiniStat icon={Fuel} label="Fill-ups" value={fuel.fills} />
               </div>
               {fuel.entries.length > 0 ? (
-                <div className="mt-3 overflow-hidden rounded-xl border border-black/5 bg-white">
-                  <div className="grid grid-cols-4 gap-2 border-b border-black/5 px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-graytext">
+                <div className="mt-3 overflow-hidden rounded-xl border border-line bg-surface">
+                  <div className="grid grid-cols-4 gap-2 border-b border-line px-3 py-2 text-[11px] font-bold uppercase tracking-wide text-graytext">
                     <span>Date</span><span className="text-right">Litres</span><span className="text-right">km</span><span className="text-right">L/100km</span>
                   </div>
                   {fuel.entries.slice(0, 8).map((e, i) => (
-                    <div key={i} className="grid grid-cols-4 gap-2 border-b border-black/5 px-3 py-2 text-sm last:border-0">
-                      <span className="font-semibold text-ink">{formatDate(e.date)}</span>
+                    <div key={i} className="grid grid-cols-4 gap-2 border-b border-line px-3 py-2 text-sm last:border-0">
+                      <span className="font-semibold text-white">{formatDate(e.date)}</span>
                       <span className="tabular text-right">{e.litres} L</span>
                       <span className="tabular text-right">{e.km != null ? formatNumber(e.km) : '—'}</span>
-                      <span className="tabular text-right font-bold text-ink">{e.l100 ?? '—'}</span>
+                      <span className="tabular text-right font-bold text-white">{e.l100 ?? '—'}</span>
                     </div>
                   ))}
                 </div>
@@ -252,7 +252,7 @@ export default function Fleet() {
                   return (
                     <Card key={insp.id} padded>
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-bold text-ink">{formatDate(insp.date)}</span>
+                        <span className="text-sm font-bold text-white">{formatDate(insp.date)}</span>
                         <Badge color={badge.color} dot>{badge.label}</Badge>
                       </div>
                       <div className="mt-1 text-xs text-graytext">
@@ -271,7 +271,7 @@ export default function Fleet() {
                       {insp.photos?.length > 0 && (
                         <div className="mt-2 flex flex-wrap gap-1.5">
                           {insp.photos.map((src, i) => (
-                            <a key={i} href={src} target="_blank" rel="noreferrer" className="block h-14 w-14 overflow-hidden rounded-lg border border-black/10">
+                            <a key={i} href={src} target="_blank" rel="noreferrer" className="block h-14 w-14 overflow-hidden rounded-lg border border-line">
                               <img src={src} alt={`inspection photo ${i + 1}`} className="h-full w-full object-cover" />
                             </a>
                           ))}
@@ -293,7 +293,7 @@ export default function Fleet() {
                 value={notesDraft}
                 onChange={(e) => setNotesDraft(e.target.value)}
                 rows={4}
-                className="w-full resize-none rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm font-medium text-ink outline-none focus:border-green"
+                className="w-full resize-none rounded-xl border border-line bg-surface px-4 py-3 text-sm font-medium text-white outline-none focus:border-green"
               />
               <Button className="mt-2" size="sm" icon={Save} onClick={saveNotes}>Save Notes</Button>
             </div>
@@ -329,9 +329,9 @@ export default function Fleet() {
 
 function MiniStat({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-2xl bg-white px-3 py-3 text-center shadow-card">
+    <div className="rounded-2xl bg-surface px-3 py-3 text-center shadow-card">
       <Icon size={16} className="mx-auto text-green" />
-      <div className="tabular mt-1 text-xl font-black text-ink">{value}</div>
+      <div className="tabular mt-1 text-xl font-black text-white">{value}</div>
       <div className="text-[11px] font-bold uppercase tracking-wide text-graytext">{label}</div>
     </div>
   )
@@ -341,7 +341,7 @@ function Info({ label, value }) {
   return (
     <div>
       <div className="text-xs font-bold uppercase tracking-wide text-graytext">{label}</div>
-      <div className="font-extrabold text-ink">{value}</div>
+      <div className="font-extrabold text-white">{value}</div>
     </div>
   )
 }

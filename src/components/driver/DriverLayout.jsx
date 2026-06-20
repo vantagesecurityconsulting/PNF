@@ -31,19 +31,23 @@ export default function DriverLayout() {
   return (
     <div className="mx-auto flex min-h-screen max-w-3xl flex-col bg-offwhite">
       {/* Top bar */}
-      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-black/5 bg-white px-4 py-3">
+      <header className="sticky top-0 z-20 flex items-center justify-between border-b border-line bg-surface px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <ParkNFlyMark size={34} />
+          <ParkNFlyMark size={32} />
           <div className="leading-none">
-            <div className="text-sm font-black tracking-tight text-ink">ShuttleLog</div>
-            <div className="text-[11px] font-bold text-green">Driver · Halifax YHZ</div>
+            <div className="text-sm font-semibold tracking-tight text-white">
+              DRIVE<span className="text-brand">X</span>
+            </div>
+            <div className="mt-0.5 text-[10px] font-medium uppercase tracking-wide text-muted">
+              Park N Fly · Driver
+            </div>
           </div>
         </div>
 
         {shiftStarted && driver ? (
           <div className="flex items-center gap-2.5">
             <div className="text-right leading-tight">
-              <div className="text-sm font-extrabold text-ink">{driver.name}</div>
+              <div className="text-sm font-extrabold text-white">{driver.name}</div>
               <div className="text-[11px] font-semibold text-graytext">
                 {vehicle?.busNum} · {formatDate(shiftDate)}
               </div>
@@ -53,7 +57,7 @@ export default function DriverLayout() {
         ) : (
           <Link
             to="/manager"
-            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-graytext hover:bg-gray-100"
+            className="flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-bold text-graytext hover:bg-white/5"
           >
             <MonitorCog size={15} /> Manager View
           </Link>
@@ -67,7 +71,7 @@ export default function DriverLayout() {
 
       {/* Bottom tab bar (only during an active shift) */}
       {shiftStarted && !onStartScreen && (
-        <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl border-t border-black/5 bg-white px-2 py-1.5 shadow-[0_-2px_12px_rgba(17,17,17,0.06)]">
+        <nav className="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-3xl border-t border-line bg-surface px-2 py-1.5 shadow-[0_-2px_12px_rgba(17,17,17,0.06)]">
           <div className="flex items-stretch justify-around">
             {TABS.map((tab) => (
               <NavLink
@@ -75,7 +79,7 @@ export default function DriverLayout() {
                 to={tab.to}
                 className={({ isActive }) =>
                   `flex min-h-[56px] flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[11px] font-bold transition-colors ${
-                    isActive ? 'bg-green-light text-green-dark' : 'text-graytext hover:bg-gray-50'
+                    isActive ? 'bg-brand/15 text-brand' : 'text-graytext hover:bg-white/5'
                   }`
                 }
               >

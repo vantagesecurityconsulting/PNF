@@ -88,7 +88,7 @@ export default function Reports() {
   }
 
   const inputCls =
-    'h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green'
+    'h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-green'
 
   return (
     <div className="space-y-6">
@@ -181,18 +181,18 @@ function ReportCard({ icon: Icon, title, description, includes, lastGenerated, c
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-green-light text-green-dark">
         <Icon size={22} />
       </div>
-      <h2 className="mt-3 text-lg font-extrabold text-ink">{title}</h2>
+      <h2 className="mt-3 text-lg font-extrabold text-white">{title}</h2>
       <p className="mt-1 text-sm text-graytext">{description}</p>
 
       <ul className="mt-3 space-y-1.5">
         {includes.map((item) => (
-          <li key={item} className="flex items-center gap-2 text-xs font-semibold text-ink">
+          <li key={item} className="flex items-center gap-2 text-xs font-semibold text-white">
             <CheckCircle2 size={14} className="shrink-0 text-green" /> {item}
           </li>
         ))}
       </ul>
 
-      <div className="mt-4 space-y-3 border-t border-black/5 pt-4">{children}</div>
+      <div className="mt-4 space-y-3 border-t border-line pt-4">{children}</div>
 
       <div className="mt-3 flex items-center gap-1.5 text-xs text-graytext">
         <Clock size={12} />

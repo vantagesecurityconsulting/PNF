@@ -19,16 +19,16 @@ export function SlideOver({ open, onClose, title, subtitle, children, width = 'm
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`absolute right-0 top-0 flex h-full w-full ${width} animate-slide-in flex-col bg-offwhite shadow-slideover`}
+        className={`absolute right-0 top-0 flex h-full w-full ${width} animate-slide-in flex-col border-l border-line bg-offwhite`}
       >
-        <div className="flex items-start justify-between border-b border-black/5 bg-white px-6 py-4">
+        <div className="flex items-start justify-between border-b border-line bg-surface px-6 py-4">
           <div>
-            <h2 className="text-lg font-extrabold tracking-tight text-ink">{title}</h2>
+            <h2 className="text-lg font-extrabold tracking-tight text-white">{title}</h2>
             {subtitle && <p className="mt-0.5 text-sm text-graytext">{subtitle}</p>}
           </div>
           <button
             onClick={onClose}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-graytext hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-graytext hover:bg-white/5"
             aria-label="Close"
           >
             <X size={20} />

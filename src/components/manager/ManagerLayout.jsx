@@ -90,12 +90,12 @@ export default function ManagerLayout() {
       <nav className="flex-1 space-y-1 overflow-y-auto px-3">
         <button
           onClick={() => { setSearchOpen(true); setMobileOpen(false) }}
-          className={`mb-1 flex w-full items-center gap-3 rounded-xl border border-gray-200 px-3 py-2.5 text-sm font-bold text-graytext transition-colors hover:bg-gray-50 ${showLabels ? '' : 'justify-center'}`}
+          className={`mb-1 flex w-full items-center gap-3 rounded-xl border border-line px-3 py-2.5 text-sm font-bold text-graytext transition-colors hover:bg-white/5 ${showLabels ? '' : 'justify-center'}`}
           title="Search (⌘K)"
         >
           <Search size={20} strokeWidth={2.2} />
           {showLabels && <span className="flex-1 text-left">Search</span>}
-          {showLabels && <kbd className="rounded bg-gray-100 px-1.5 py-0.5 text-[10px] font-bold">⌘K</kbd>}
+          {showLabels && <kbd className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-bold">⌘K</kbd>}
         </button>
         {NAV.map((item) => (
           <NavItem
@@ -109,7 +109,7 @@ export default function ManagerLayout() {
 
         {isOwner && (
           <>
-            <div className={`px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-wider text-gray-400 ${showLabels ? '' : 'text-center'}`}>
+            <div className={`px-3 pb-1 pt-4 text-[10px] font-bold uppercase tracking-wider text-muted ${showLabels ? '' : 'text-center'}`}>
               {showLabels ? 'Owner Admin' : '•••'}
             </div>
             {OWNER_NAV.map((item) => (
@@ -120,14 +120,14 @@ export default function ManagerLayout() {
       </nav>
 
       {/* Bottom */}
-      <div className="space-y-2 border-t border-black/5 px-3 py-4">
+      <div className="space-y-2 border-t border-line px-3 py-4">
         {/* Location switcher / label */}
         {isOwner && showLabels ? (
           <div className="relative">
             <select
               value={activeLocationId || ''}
               onChange={(e) => setActiveLocation(e.target.value)}
-              className="h-9 w-full appearance-none rounded-xl bg-green-light px-3 pr-8 text-xs font-bold text-green-dark outline-none"
+              className="h-9 w-full appearance-none rounded-xl bg-brand/15 px-3 pr-8 text-xs font-bold text-brand outline-none"
             >
               {locations.map((l) => (
                 <option key={l.id} value={l.id}>
@@ -135,10 +135,10 @@ export default function ManagerLayout() {
                 </option>
               ))}
             </select>
-            <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-2.5 text-green-dark" />
+            <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-2.5 text-brand" />
           </div>
         ) : (
-          <div className={`flex items-center gap-2 rounded-xl bg-green-light px-3 py-2 text-xs font-bold text-green-dark ${showLabels ? '' : 'justify-center'}`}>
+          <div className={`flex items-center gap-2 rounded-xl bg-brand/15 px-3 py-2 text-xs font-bold text-brand ${showLabels ? '' : 'justify-center'}`}>
             <MapPin size={15} />
             {showLabels && (activeLocation ? `${activeLocation.city} · ${activeLocation.code}` : '—')}
           </div>
@@ -151,7 +151,7 @@ export default function ManagerLayout() {
               {currentUser.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
             </div>
             <div className="min-w-0 flex-1 leading-tight">
-              <div className="truncate text-xs font-bold text-ink">{currentUser.name}</div>
+              <div className="truncate text-xs font-bold text-white">{currentUser.name}</div>
               <div className="text-[10px] font-semibold uppercase tracking-wide text-graytext">{currentUser.role}</div>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function ManagerLayout() {
 
         <Link
           to="/driver"
-          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-gray-100 ${showLabels ? '' : 'justify-center'}`}
+          className={`flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-white/5 ${showLabels ? '' : 'justify-center'}`}
           title="Switch to Driver View"
         >
           <Tablet size={15} />
@@ -177,10 +177,14 @@ export default function ManagerLayout() {
 
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className={`hidden w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-gray-100 lg:flex ${showLabels ? '' : 'justify-center'}`}
+          className={`hidden w-full items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold text-graytext hover:bg-white/5 lg:flex ${showLabels ? '' : 'justify-center'}`}
         >
           {showLabels ? <><PanelLeftClose size={15} /> Collapse</> : <PanelLeft size={18} />}
         </button>
+
+        {showLabels && (
+          <div className="px-3 pt-2 text-[11px] text-muted">Powered by Drivex</div>
+        )}
       </div>
     </div>
   )
@@ -188,7 +192,7 @@ export default function ManagerLayout() {
   return (
     <div className="flex min-h-screen bg-offwhite">
       {/* Desktop sidebar */}
-      <aside className={`hidden shrink-0 border-r border-black/5 bg-white transition-all lg:block ${sidebarWidth}`}>
+      <aside className={`hidden shrink-0 border-r border-line bg-surface transition-all lg:block ${sidebarWidth}`}>
         <div className="sticky top-0 h-screen">
           <SidebarInner showLabels={!collapsed} />
         </div>
@@ -198,7 +202,7 @@ export default function ManagerLayout() {
       {mobileOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="absolute inset-0 bg-ink/40" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute left-0 top-0 h-full w-64 animate-slide-in bg-white shadow-slideover">
+          <aside className="absolute left-0 top-0 h-full w-64 animate-slide-in bg-surface shadow-slideover">
             <SidebarInner showLabels />
           </aside>
         </div>
@@ -206,10 +210,10 @@ export default function ManagerLayout() {
 
       {/* Main */}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3 lg:hidden">
+        <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 lg:hidden">
           <button
             onClick={() => setMobileOpen(true)}
-            className="flex h-9 w-9 items-center justify-center rounded-lg text-ink hover:bg-gray-100"
+            className="flex h-9 w-9 items-center justify-center rounded-lg text-white hover:bg-white/5"
             aria-label="Open menu"
           >
             <Menu size={22} />
@@ -236,7 +240,7 @@ function NavItem({ item, showLabels, onNavigate, badge = 0 }) {
       onClick={onNavigate}
       className={({ isActive }) =>
         `relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-bold transition-colors ${
-          isActive ? 'bg-green-light text-green-dark' : 'text-graytext hover:bg-gray-100 hover:text-ink'
+          isActive ? 'bg-brand/15 text-brand' : 'text-graytext hover:bg-white/5 hover:text-white'
         } ${showLabels ? '' : 'justify-center'}`
       }
       title={item.label}

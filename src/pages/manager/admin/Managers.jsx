@@ -43,10 +43,10 @@ export default function Managers() {
     setErr('')
   }
 
-  const inputCls = 'h-10 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm font-semibold text-ink outline-none focus:border-green'
+  const inputCls = 'h-10 w-full rounded-lg border border-line bg-surface px-3 text-sm font-semibold text-white outline-none focus:border-green'
 
   const columns = [
-    { key: 'name', header: 'Name', render: (a) => <span className="font-extrabold text-ink">{a.name}</span> },
+    { key: 'name', header: 'Name', render: (a) => <span className="font-extrabold text-white">{a.name}</span> },
     { key: 'email', header: 'Email', render: (a) => <span className="flex items-center gap-1.5 text-graytext"><Mail size={13} /> {a.email}</span> },
     { key: 'location', header: 'Location', render: (a) => <Badge color="green"><MapPin size={11} className="mr-0.5 inline" />{locLabel(a.locationId)}</Badge> },
     {

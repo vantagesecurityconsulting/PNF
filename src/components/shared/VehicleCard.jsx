@@ -14,7 +14,7 @@ export function VehicleCard({ vehicle, driverName, liveStatus, tripCount = 0, la
   return (
     <button
       onClick={onClick}
-      className={`group w-full rounded-2xl border border-black/5 bg-white p-4 text-left shadow-card transition-all hover:shadow-card-hover ${
+      className={`group w-full rounded-2xl border border-line bg-surface p-4 text-left shadow-card transition-all hover:shadow-card-hover ${
         onClick ? 'cursor-pointer' : 'cursor-default'
       }`}
     >
@@ -24,7 +24,7 @@ export function VehicleCard({ vehicle, driverName, liveStatus, tripCount = 0, la
             <Bus size={20} strokeWidth={2.4} />
           </div>
           <div>
-            <div className="text-base font-extrabold tracking-tight text-ink">{vehicle.busNum}</div>
+            <div className="text-base font-extrabold tracking-tight text-white">{vehicle.busNum}</div>
             <div className="text-xs font-semibold text-graytext">
               {vehicle.make} {vehicle.model}
             </div>
@@ -35,8 +35,8 @@ export function VehicleCard({ vehicle, driverName, liveStatus, tripCount = 0, la
         </Badge>
       </div>
 
-      <div className="mt-3 flex items-center justify-between border-t border-black/5 pt-3 text-sm">
-        <span className="font-semibold text-ink">{driverName || 'Unassigned'}</span>
+      <div className="mt-3 flex items-center justify-between border-t border-line pt-3 text-sm">
+        <span className="font-semibold text-white">{driverName || 'Unassigned'}</span>
         <span className="flex items-center gap-1 tabular font-bold text-graytext">
           <Route size={14} /> {tripCount}
         </span>

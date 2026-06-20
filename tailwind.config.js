@@ -4,28 +4,39 @@ export default {
   theme: {
     extend: {
       colors: {
-        green: {
-          DEFAULT: '#3fae29',
-          dark: '#2d8c1e',
-          light: '#e8f7e5',
+        // Drivex brand accent (orange)
+        brand: {
+          DEFAULT: '#E8500A',
+          light: '#FF6B2B',
         },
-        ink: '#111111',
-        offwhite: '#f5f5f3',
-        graytext: '#6b6b6b',
-        amber: { DEFAULT: '#f5a623' },
-        danger: '#d0021b',
+        // `green` is repointed to the brand's SUCCESS green so all existing
+        // "good / active / complete" status usages remain correct.
+        green: {
+          DEFAULT: '#1D9E75',
+          dark: '#25b083',
+          light: 'rgba(29,158,117,0.15)',
+        },
+        // Dark theme neutrals
+        ink: '#111111', // dark backgrounds (header, overlays)
+        offwhite: '#111111', // page background (now dark)
+        base: '#111111',
+        surface: '#1A1A1A', // cards / panels / inputs
+        line: '#2A2A2A', // borders
+        muted: '#888888',
+        graytext: '#888888',
+        // Status palette
+        amber: { DEFAULT: '#EF9F27' },
+        danger: '#E24B4A',
         info: '#1976D2',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
-      fontVariantNumeric: {
-        tabular: 'tabular-nums',
-      },
+      // Brand rule: flat & clean — no drop shadows.
       boxShadow: {
-        card: '0 1px 3px rgba(17,17,17,0.08), 0 1px 2px rgba(17,17,17,0.04)',
-        'card-hover': '0 4px 16px rgba(17,17,17,0.12)',
-        slideover: '-8px 0 32px rgba(17,17,17,0.12)',
+        card: 'none',
+        'card-hover': 'none',
+        slideover: 'none',
       },
       keyframes: {
         'slide-in': {

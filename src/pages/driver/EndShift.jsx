@@ -139,7 +139,7 @@ export default function EndShift() {
 
   return (
     <div className="mx-auto max-w-xl space-y-4">
-      <h1 className="text-2xl font-black tracking-tight text-ink">End of Shift</h1>
+      <h1 className="text-2xl font-black tracking-tight text-white">End of Shift</h1>
 
       <Card padded className="space-y-4">
         <div className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
@@ -150,7 +150,7 @@ export default function EndShift() {
           <Info label="Break Time" value={formatMinutes(breakMinutes)} />
           <Info label="Active Time" value={activeMinutes != null ? formatMinutes(activeMinutes) : '—'} />
         </div>
-        <div className="grid grid-cols-3 gap-3 border-t border-black/5 pt-4">
+        <div className="grid grid-cols-3 gap-3 border-t border-line pt-4">
           <Stat icon={Route} label="Trips" value={totals.totalTrips} />
           <Stat icon={Users} label="Total Pax" value={totals.totalPax} />
           <Stat icon={Clock} label="Pax →/←" value={`${totals.paxTo}/${totals.paxFrom}`} />
@@ -164,7 +164,7 @@ export default function EndShift() {
 
       {/* Odometer */}
       <Card padded className="space-y-3">
-        <label className="flex items-center gap-1.5 text-sm font-bold text-ink">
+        <label className="flex items-center gap-1.5 text-sm font-bold text-white">
           <Gauge size={15} className="text-graytext" /> Odometer End (km)
         </label>
         <input
@@ -173,7 +173,7 @@ export default function EndShift() {
           value={odoEnd}
           onChange={(e) => { setOdoEnd(e.target.value); setError('') }}
           placeholder={`Greater than ${Number(odoStart).toLocaleString()}`}
-          className="tabular h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold text-ink outline-none focus:border-green"
+          className="tabular h-12 w-full rounded-xl border border-line bg-surface px-4 font-semibold text-white outline-none focus:border-green"
         />
         <div className="flex items-center justify-between rounded-xl bg-green-light px-4 py-3">
           <span className="text-sm font-bold text-green-dark">Total Distance</span>
@@ -185,7 +185,7 @@ export default function EndShift() {
 
       {/* Fuel added */}
       <Card padded className="space-y-3">
-        <label className="flex items-center gap-1.5 text-sm font-bold text-ink">
+        <label className="flex items-center gap-1.5 text-sm font-bold text-white">
           <Fuel size={15} className="text-graytext" /> Fuel Added (litres)
         </label>
         <input
@@ -194,7 +194,7 @@ export default function EndShift() {
           value={fuelLitres}
           onChange={(e) => { setFuelLitres(e.target.value); setError('') }}
           placeholder="How many litres did you put in? (0 if none)"
-          className="tabular h-12 w-full rounded-xl border border-gray-300 bg-white px-4 font-semibold text-ink outline-none focus:border-green"
+          className="tabular h-12 w-full rounded-xl border border-line bg-surface px-4 font-semibold text-white outline-none focus:border-green"
         />
         <p className="text-xs text-graytext">Logged to the shift record and the fleet's fuel history.</p>
         {error && (
@@ -246,9 +246,9 @@ export default function EndShift() {
       >
         <p className="text-sm text-graytext">
           Your full shift report will download automatically and the shift will be submitted to
-          management — <span className="font-bold text-ink">{totals.totalTrips} trips</span>,{' '}
-          <span className="font-bold text-ink">{totals.totalPax} passengers</span>, and{' '}
-          <span className="font-bold text-ink">{fuelLitres || 0} L</span> fuel.
+          management — <span className="font-bold text-white">{totals.totalTrips} trips</span>,{' '}
+          <span className="font-bold text-white">{totals.totalPax} passengers</span>, and{' '}
+          <span className="font-bold text-white">{fuelLitres || 0} L</span> fuel.
         </p>
       </Modal>
     </div>
@@ -259,7 +259,7 @@ function Info({ label, value }) {
   return (
     <div>
       <div className="text-xs font-bold uppercase tracking-wide text-graytext">{label}</div>
-      <div className="font-extrabold text-ink">{value || '—'}</div>
+      <div className="font-extrabold text-white">{value || '—'}</div>
     </div>
   )
 }
@@ -268,7 +268,7 @@ function Stat({ icon: Icon, label, value }) {
   return (
     <div className="rounded-xl bg-offwhite px-3 py-2.5 text-center">
       <Icon size={15} className="mx-auto text-green" />
-      <div className="tabular mt-1 text-lg font-black text-ink">{value}</div>
+      <div className="tabular mt-1 text-lg font-black text-white">{value}</div>
       <div className="text-[11px] font-bold uppercase tracking-wide text-graytext">{label}</div>
     </div>
   )
